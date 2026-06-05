@@ -1,15 +1,26 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from scalar_fastapi import get_scalar_api_reference
 
 from app.config import get_settings
+from app.db import init_models
 
 settings = get_settings()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await init_models()
+    yield
+
 
 app = FastAPI(
     title=settings.app_name,
     version="0.1.0",
     docs_url=None,
     redoc_url=None,
+    lifespan=lifespan,
 )
 
 
