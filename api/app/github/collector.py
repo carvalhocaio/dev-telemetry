@@ -97,7 +97,7 @@ class GitHubCollector:
             "title": detail["title"],
             "body": detail.get("body"),
             "state": self._pr_state(detail),
-            "gh_merget_at": self._parse_optional_dt(detail.get("merged_at")),
+            "gh_merged_at": self._parse_optional_dt(detail.get("merged_at")),
             "additions": detail.get("additions", 0),
             "deletions": detail.get("deletions", 0),
             "changed_files": detail.get("changed_files", 0),
