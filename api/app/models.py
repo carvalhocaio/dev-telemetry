@@ -23,7 +23,7 @@ class Repository(Base):
     name: Mapped[str] = mapped_column(String(255))
     full_name: Mapped[str] = mapped_column(String(512), unique=True)
 
-    commit: Mapped[list["Commit"]] = relationship(back_populates="repository")
+    commits: Mapped[list["Commit"]] = relationship(back_populates="repository")
     pull_requests: Mapped[list["PullRequest"]] = relationship(
         back_populates="repository"
     )
