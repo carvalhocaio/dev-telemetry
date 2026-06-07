@@ -8,7 +8,11 @@ from app.auth import require_auth
 from app.config import get_settings
 from app.db import get_session
 from app.github.client import create_github_client
-from app.github.collector import GitHubCollector
+from app.github.collector import (
+    DEFAULT_WINDOW_DAYS,
+    INCREMENTAL_WINDOW_DAYS,
+    GitHubCollector,
+)
 from app.models import Commit, PullRequest, Repository
 
 router = APIRouter(tags=["sync"], dependencies=[Depends(require_auth)])
@@ -18,6 +22,15 @@ SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 @router.post("/refresh")
 async def refresh(session: SessionDep) -> dict[str, int]:
+    return await _run_sync(session, window_days=INCREMENTAL_WINDOW_DAYS)
+
+
+@router.post("/refresh/full")
+async def refresh_full(session: SessionDep) -> dict[str, int]:
+    return await _run_sync(session, window_days=DEFAULT_WINDOW_DAYS)
+
+
+async def _run_sync(session: AsyncSession, *, window_days: int) -> dict[str, int]:
     settings = get_settings()
     client = create_github_client()
     try:
@@ -26,6 +39,7 @@ async def refresh(session: SessionDep) -> dict[str, int]:
             session,
             org=settings.github_org,
             username=settings.github_username,
+            window_days=window_days,
         )
         await collector.collect()
     finally:

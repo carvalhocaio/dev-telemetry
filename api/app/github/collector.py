@@ -6,7 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.github.client import JSON, GitHubClient
 from app.models import Commit, PullRequest, Repository
 
-COLLECTION_WINDOW_DAYS = 90
+DEFAULT_WINDOW_DAYS = 90
+INCREMENTAL_WINDOW_DAYS = 30
 
 
 class GitHubCollector:
@@ -17,12 +18,13 @@ class GitHubCollector:
         *,
         org: str,
         username: str,
+        window_days: int = DEFAULT_WINDOW_DAYS,
     ) -> None:
         self._client = client
         self._session = session
         self._org = org
         self._username = username
-        self._since = datetime.now(UTC) - timedelta(days=COLLECTION_WINDOW_DAYS)
+        self._since = datetime.now(UTC) - timedelta(days=window_days)
 
     async def collect(self) -> None:
         repos = await self._client.list_org_repos(self._org)
