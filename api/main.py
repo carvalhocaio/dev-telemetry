@@ -5,6 +5,7 @@ from scalar_fastapi import get_scalar_api_reference
 
 from app.config import get_settings
 from app.db import init_models
+from app.routers.refresh import router as refresh_router
 
 settings = get_settings()
 
@@ -22,6 +23,8 @@ app = FastAPI(
     redoc_url=None,
     lifespan=lifespan,
 )
+
+app.include_router(refresh_router)
 
 
 @app.get("/health", tags=["meta"])
