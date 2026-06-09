@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from google import genai
 from google.genai import types
 
@@ -10,6 +12,9 @@ TEMPERATURE = 0.2
 
 MAX_ITEMS_PER_KIND = 40
 MAX_CHARS_PER_ITEM = 600
+
+_DOCS_ROOT = Path(__file__).resolve().parents[4] / "docs"
+_MARKET_REF_PATH = _DOCS_ROOT / "data_engineer_pleno.md"
 
 _SYSTEM_INSTRUCTION = (
     "Você é um analista técnico que interpreta a atividade de um engenheiro "
@@ -27,11 +32,19 @@ _SYSTEM_INSTRUCTION = (
 )
 
 
+def _load_market_reference() -> str | None:
+    try:
+        return _MARKET_REF_PATH.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        return None
+
+
 class NarrativeGenerator:
     def __init__(self, *, include_patches: bool = False) -> None:
         settings = get_settings()
         self._client = genai.Client(api_key=settings.gemini_api_key)
         self._include_patches = include_patches
+        self._market_ref = _load_market_reference()
 
     async def generate(
         self,
@@ -63,7 +76,9 @@ class NarrativeGenerator:
         if isinstance(parsed, Narrative):
             return parsed
         if response.text is None:
-            raise ValueError("A resposta da API não contém dados para serem analisados.")
+            raise ValueError(
+                "A resposta da API não contém dados para serem analisados."
+            )
         return Narrative.model_validate_json(response.text)
 
     def _build_prompt(
@@ -91,6 +106,13 @@ class NarrativeGenerator:
 
         if self._include_patches and patches:
             sections += ["", "DIFFS (amostra):", self._format_block(patches)]
+
+        if self._market_ref:
+            sections += [
+                "",
+                "RUBRICA DE MERCADO (referência para interpretação dos níveis):",
+                self._market_ref,
+            ]
 
         sections += [
             "",
