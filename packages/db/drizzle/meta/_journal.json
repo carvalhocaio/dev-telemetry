@@ -8,6 +8,13 @@
       "when": 1781065127639,
       "tag": "0000_talented_tag",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1781099230190,
+      "tag": "0001_demonic_malice",
+      "breakpoints": true
     }
   ]
 }

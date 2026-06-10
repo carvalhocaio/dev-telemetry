@@ -137,6 +137,24 @@ export const userSecret = pgTable("user_secret", {
     .defaultNow(),
 });
 
+export const userProfile = pgTable("user_profile", {
+  id: text("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: text("userId")
+    .notNull()
+    .unique()
+    .references(() => user.id, { onDelete: "cascade" }),
+  // Built-in rubric key (e.g. `data_engineer_pleno`) or `custom`.
+  profileKey: text("profileKey").notNull(),
+  // Free-form rubric markdown — only populated when profileKey is `custom`.
+  customContent: text("customContent"),
+  createdAt: timestamp("createdAt", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updatedAt", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
 export const userUsage = pgTable("user_usage", {
   id: text("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: text("userId")
@@ -277,6 +295,10 @@ export const userRelations = relations(user, ({ many, one }) => ({
     fields: [user.id],
     references: [userSecret.userId],
   }),
+  profile: one(userProfile, {
+    fields: [user.id],
+    references: [userProfile.userId],
+  }),
   usage: one(userUsage, {
     fields: [user.id],
     references: [userUsage.userId],
@@ -297,6 +319,10 @@ export const accountRelations = relations(account, ({ one }) => ({
 
 export const userSecretRelations = relations(userSecret, ({ one }) => ({
   user: one(user, { fields: [userSecret.userId], references: [user.id] }),
+}));
+
+export const userProfileRelations = relations(userProfile, ({ one }) => ({
+  user: one(user, { fields: [userProfile.userId], references: [user.id] }),
 }));
 
 export const userUsageRelations = relations(userUsage, ({ one }) => ({
@@ -340,6 +366,8 @@ export type Account = typeof account.$inferSelect;
 export type Verification = typeof verification.$inferSelect;
 export type UserSecret = typeof userSecret.$inferSelect;
 export type NewUserSecret = typeof userSecret.$inferInsert;
+export type UserProfile = typeof userProfile.$inferSelect;
+export type NewUserProfile = typeof userProfile.$inferInsert;
 export type UserUsage = typeof userUsage.$inferSelect;
 export type Repository = typeof repository.$inferSelect;
 export type NewRepository = typeof repository.$inferInsert;
