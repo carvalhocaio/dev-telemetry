@@ -35,7 +35,7 @@ export default function LoginDialog() {
   }
 
   async function handleSubmit(
-    event: React.FormEvent<HTMLFormElement>,
+    event: React.SyntheticEvent<HTMLFormElement>,
   ): Promise<void> {
     event.preventDefault();
     if (status === "loading" || password.length === 0) {

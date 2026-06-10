@@ -1,0 +1,28 @@
+{
+  "name": "@dev-telemetry/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./types": "./src/types.ts",
+    "./classifier": "./src/classifier.ts",
+    "./bucket": "./src/bucket.ts",
+    "./metrics": "./src/metrics.ts",
+    "./reporting": "./src/reporting.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "lint": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@dev-telemetry/db": "workspace:*",
+    "drizzle-orm": "^0.45.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "typescript": "^5",
+    "vitest": "^4.1.8"
+  }
+}

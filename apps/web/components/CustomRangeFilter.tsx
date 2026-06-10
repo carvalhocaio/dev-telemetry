@@ -35,7 +35,7 @@ export default function CustomRangeFilter({ value }: CustomRangeFilterProps) {
   const ordered = !bothSet || start <= end;
   const canApply = bothSet && ordered;
 
-  function handleSubmit(event: React.FormEvent<HTMLFormElement>): void {
+  function handleSubmit(event: React.SyntheticEvent<HTMLFormElement>): void {
     event.preventDefault();
     if (!canApply) {
       return;
