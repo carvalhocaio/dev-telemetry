@@ -4,4 +4,11 @@ run-api:
 run-web:
 	cd web && rm -rf .next/ && pnpm dev
 
-dev: run-api run-web
+dev:
+	mprocs
+
+# Fallback sem instalar nada: roda os dois em paralelo (saídas intercaladas)
+dev-parallel:
+	$(MAKE) -j2 run-api run-web
+
+.PHONY: run-api run-web dev dev-parallel

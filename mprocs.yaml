@@ -1,0 +1,15 @@
+procs:
+  api:
+    shell: "uv run granian --interface asgi main:app --reload --access-log"
+    cwd: "<CONFIG_DIR>/api"
+    autorestart: true
+    stop: SIGINT
+
+  web:
+    shell: "rm -rf .next/ && pnpm dev"
+    cwd: "<CONFIG_DIR>/web"
+    autorestart: true
+
+# UI
+proc_list_width: 22
+proc_list_title: "Services"
