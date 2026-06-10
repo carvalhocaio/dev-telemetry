@@ -23,6 +23,7 @@ function labelFor(key: string): { label: string; group: string } {
  * Elysia plugin: user profile routes under /me.
  *
  * GET /api/me/profile  — current profile key + label + content preview (200 chars)
+ *                        For custom profiles, also returns full customContent (owner's own data).
  * PUT /api/me/profile  — save built-in profileKey or custom content (≤32 KB)
  */
 export const profilesRoutes = new Elysia({ prefix: "/me" })
@@ -46,6 +47,8 @@ export const profilesRoutes = new Elysia({ prefix: "/me" })
       profileKey: key,
       ...labelFor(key),
       contentPreview: content.slice(0, 200),
+      // Full custom content returned to the owner so the textarea can be pre-filled correctly.
+      customContent: key === "custom" ? (row?.customContent ?? null) : null,
     };
   })
 
