@@ -1,7 +1,9 @@
 import "server-only";
 import { Elysia } from "elysia";
 import { auth } from "@/lib/auth";
+import { reportsRoutes } from "./reports";
 import { secretsRoutes } from "./secrets";
+import { syncRoutes } from "./sync";
 
 export const app = new Elysia({ prefix: "/api" })
   .get("/me", async ({ request, status }) => {
@@ -14,6 +16,8 @@ export const app = new Elysia({ prefix: "/api" })
       image: s.user.image ?? null,
     };
   })
-  .use(secretsRoutes);
+  .use(secretsRoutes)
+  .use(reportsRoutes)
+  .use(syncRoutes);
 
 export type App = typeof app;

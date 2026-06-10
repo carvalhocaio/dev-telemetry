@@ -12,8 +12,11 @@
       "name": "web",
       "version": "0.1.0",
       "dependencies": {
+        "@dev-telemetry/ai": "workspace:*",
+        "@dev-telemetry/core": "workspace:*",
         "@dev-telemetry/crypto": "workspace:*",
         "@dev-telemetry/db": "workspace:*",
+        "@dev-telemetry/github": "workspace:*",
         "@elysiajs/eden": "^1.4.9",
         "better-auth": "^1.6.16",
         "drizzle-orm": "^0.45.2",
