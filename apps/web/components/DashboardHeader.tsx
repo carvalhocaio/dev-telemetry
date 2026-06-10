@@ -7,10 +7,11 @@ import { useState } from "react";
 import AiPoweredBadge from "@/components/AiPoweredBadge";
 import CustomRangeFilter from "@/components/CustomRangeFilter";
 import ModeSelector from "@/components/ModeSelector";
+import ScopeSelector from "@/components/ScopeSelector";
 import SyncButton from "@/components/SyncButton";
 import { signOut } from "@/lib/auth-client";
 import { resolveMode, type CustomRange } from "@/lib/range";
-import { isGranularity } from "@/types/report";
+import { isGranularity, isScope, type Scope } from "@/types/report";
 
 function readCustom(searchParams: URLSearchParams): CustomRange | undefined {
   const res = searchParams.get("res");
@@ -26,6 +27,8 @@ export default function DashboardHeader() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const mode = resolveMode(searchParams.get("mode"));
+  const rawScope = searchParams.get("scope");
+  const scope: Scope = isScope(rawScope) ? rawScope : "all";
   const custom = readCustom(searchParams);
   const [filterOpen, setFilterOpen] = useState(mode === "custom");
 
@@ -43,6 +46,7 @@ export default function DashboardHeader() {
         <div className="flex flex-wrap items-center gap-4">
           <AiPoweredBadge />
           <ModeSelector current={mode} />
+          <ScopeSelector currentScope={scope} currentMode={mode} />
           <button
             type="button"
             onClick={() => setFilterOpen((open) => !open)}

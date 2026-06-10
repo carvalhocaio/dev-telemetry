@@ -12,7 +12,7 @@ import {
 } from "@/lib/range";
 import { useReport } from "@/hooks/useReport";
 import { useReportRefetch } from "@/hooks/useReportRefetch";
-import { isGranularity, type Coverage } from "@/types/report";
+import { isGranularity, isScope, type Coverage, type Scope } from "@/types/report";
 
 /**
  * Reads the custom-mode params from the URL, returning them only when complete.
@@ -43,6 +43,8 @@ export default function Dashboard() {
   const searchParams = useSearchParams();
   const mode = resolveMode(searchParams.get("mode"));
   const custom = readCustom(searchParams);
+  const rawScope = searchParams.get("scope");
+  const scope: Scope = isScope(rawScope) ? rawScope : "all";
 
   const { register } = useReportRefetch();
   const [coverage, setCoverage] = useState<Coverage | null>(null);
@@ -65,6 +67,7 @@ export default function Dashboard() {
   const { status, report, error, refetch } = useReport(range.resolution, {
     start: range.start,
     end: range.end,
+    scope,
   });
 
   useEffect(() => {

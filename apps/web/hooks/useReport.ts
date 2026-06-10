@@ -2,13 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 
-import type { Granularity, Report } from "@/types/report";
+import type { Granularity, Report, Scope } from "@/types/report";
 
 type Status = "loading" | "error" | "success";
 
 interface UseReportRange {
   start?: string;
   end?: string;
+  scope?: Scope;
 }
 
 interface UseReportState {
@@ -28,6 +29,7 @@ function buildUrl(resolution: Granularity, range: UseReportRange): string {
   const params = new URLSearchParams();
   if (range.start) params.set("start", range.start);
   if (range.end) params.set("end", range.end);
+  if (range.scope && range.scope !== "all") params.set("scope", range.scope);
   const query = params.toString();
   return query ? `/api/reports/${resolution}?${query}` : `/api/reports/${resolution}`;
 }
@@ -41,13 +43,13 @@ export function useReport(
 
   const refetch = useCallback(() => setNonce((v) => v + 1), []);
 
-  const { start, end } = range;
-  const key = `${resolution}:${start ?? ""}:${end ?? ""}:${nonce}`;
+  const { start, end, scope } = range;
+  const key = `${resolution}:${start ?? ""}:${end ?? ""}:${scope ?? ""}:${nonce}`;
 
   useEffect(() => {
     const controller = new AbortController();
 
-    fetch(buildUrl(resolution, { start, end }), {
+    fetch(buildUrl(resolution, { start, end, scope }), {
       credentials: "include",
       signal: controller.signal,
     })
@@ -66,7 +68,7 @@ export function useReport(
       });
 
     return () => controller.abort();
-  }, [resolution, start, end, key]);
+  }, [resolution, start, end, scope, key]);
 
   if (!result || result.key !== key) {
     return { status: "loading", report: null, error: null, refetch };

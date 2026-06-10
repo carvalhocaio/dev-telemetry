@@ -21,6 +21,13 @@ export type Resolution = Granularity;
 /** UI intent driving the time window; mapped to params in `lib/range.ts`. */
 export type Mode = "semanal" | "mensal" | "todo" | "custom";
 
+/** Repository scope filter applied to the report query. */
+export type Scope = "all" | "org" | "personal";
+
+export function isScope(s: string | null): s is Scope {
+  return s === "all" || s === "org" || s === "personal";
+}
+
 export const GRANULARITIES: readonly Granularity[] = [
   "daily",
   "weekly",

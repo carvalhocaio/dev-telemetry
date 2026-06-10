@@ -16,12 +16,38 @@ const DEFAULT_MODELS: Record<LlmProvider, string> = {
   anthropic: "claude-haiku-4-5-20251001",
 };
 
+const PROFILE_METADATA = [
+  { key: "data_engineer_jr", group: "Eng. de Dados", label: "Júnior" },
+  { key: "data_engineer_pleno", group: "Eng. de Dados", label: "Pleno" },
+  { key: "data_engineer_sr", group: "Eng. de Dados", label: "Sênior" },
+  { key: "software_engineer_estagio", group: "Eng. de Software", label: "Estágio" },
+  { key: "software_engineer_jr", group: "Eng. de Software", label: "Júnior" },
+  { key: "software_engineer_pleno", group: "Eng. de Software", label: "Pleno" },
+  { key: "software_engineer_sr", group: "Eng. de Software", label: "Sênior" },
+  { key: "student_dados", group: "Estudante", label: "Foco em Dados" },
+  { key: "student_software", group: "Estudante", label: "Foco em Software" },
+] as const;
+
+const BUILT_IN_KEYS: readonly string[] = PROFILE_METADATA.map((p) => p.key);
+const PROFILE_GROUPS = ["Eng. de Dados", "Eng. de Software", "Estudante"] as const;
+const MAX_PROFILE_LENGTH = 32768;
+
+interface ProfileResponse {
+  profileKey: string;
+  label: string;
+  group: string;
+  contentPreview: string;
+  customContent: string | null;
+}
+
 interface SecretsStatus {
   hasPat: boolean;
   hasLlmKey: boolean;
   llmProvider: string | null;
   llmModel: string | null;
   bytesUsed: number;
+  profileKey: string | null;
+  profileLabel: string | null;
 }
 
 interface SyncJob {
@@ -68,6 +94,13 @@ export default function SettingsPage() {
   const [llmSaved, setLlmSaved] = useState(false);
   const [llmError, setLlmError] = useState<string | null>(null);
 
+  // Profile form
+  const [selectedKey, setSelectedKey] = useState<string>("data_engineer_pleno");
+  const [customProfileContent, setCustomProfileContent] = useState("");
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileSaved, setProfileSaved] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+
   // Sync state
   const [syncing, setSyncing] = useState(false);
   const [syncJobId, setSyncJobId] = useState<string | null>(null);
@@ -81,17 +114,41 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (!session) return;
-    fetch("/api/me/secrets/status", { credentials: "include" })
-      .then((r) => r.json() as Promise<SecretsStatus>)
-      .then((data) => {
-        setConfig(data);
+
+    // Fetch secrets/status and profile independently so a failure in one
+    // does not suppress the other.
+    Promise.allSettled([
+      fetch("/api/me/secrets/status", { credentials: "include" }).then(
+        (r) => r.json() as Promise<SecretsStatus>,
+      ),
+      fetch("/api/me/profile", { credentials: "include" }).then(
+        (r) => r.json() as Promise<ProfileResponse>,
+      ),
+    ]).then(([statusResult, profileResult]) => {
+      if (statusResult.status === "fulfilled") {
+        const data = statusResult.value;
+        setConfig((prev) => ({
+          ...(prev ?? { hasPat: false, hasLlmKey: false, llmProvider: null, llmModel: null, bytesUsed: 0, profileKey: null, profileLabel: null }),
+          ...data,
+        }));
         if (data.llmProvider && LLM_PROVIDERS.includes(data.llmProvider as LlmProvider)) {
           const p = data.llmProvider as LlmProvider;
           setProvider(p);
           setModel(data.llmModel ?? DEFAULT_MODELS[p]);
         }
-      })
-      .catch(() => null);
+      }
+      if (profileResult.status === "fulfilled") {
+        const profile = profileResult.value;
+        setConfig((prev) => prev ? { ...prev, profileKey: profile.profileKey, profileLabel: profile.label } : prev);
+        if (BUILT_IN_KEYS.includes(profile.profileKey)) {
+          setSelectedKey(profile.profileKey);
+        } else {
+          setSelectedKey("custom");
+          // Use full customContent so the textarea is pre-filled correctly.
+          setCustomProfileContent(profile.customContent ?? "");
+        }
+      }
+    });
 
     fetch("/api/sync/current", { credentials: "include" })
       .then((r) => (r.ok ? (r.json() as Promise<SyncJob | null>) : null))
@@ -184,6 +241,39 @@ export default function SettingsPage() {
     }
   }
 
+  async function saveProfile() {
+    const isCustom = selectedKey === "custom";
+    if (isCustom && !customProfileContent.trim()) return;
+    setProfileSaving(true);
+    setProfileError(null);
+    try {
+      const body = isCustom
+        ? { customContent: customProfileContent }
+        : { profileKey: selectedKey };
+      const res = await fetch("/api/me/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        credentials: "include",
+      });
+      if (!res.ok) {
+        setProfileError("Falha ao salvar — tente novamente.");
+        return;
+      }
+      // Derive label from local metadata — PUT returns { ok: true }, not a ProfileResponse.
+      const savedKey = isCustom ? "custom" : selectedKey;
+      const savedMeta = PROFILE_METADATA.find((p) => p.key === savedKey);
+      const savedLabel = savedMeta ? `${savedMeta.label} — ${savedMeta.group}` : null;
+      setConfig((prev) =>
+        prev ? { ...prev, profileKey: savedKey, profileLabel: savedLabel } : prev,
+      );
+      setProfileSaved(true);
+      setTimeout(() => setProfileSaved(false), 3000);
+    } finally {
+      setProfileSaving(false);
+    }
+  }
+
   async function startSync(mode: "full" | "incremental") {
     if (syncing) return;
     setSyncing(true);
@@ -222,6 +312,11 @@ export default function SettingsPage() {
 
   const bytesUsed = config?.bytesUsed ?? 0;
   const usedPct = Math.min((bytesUsed / QUOTA_BYTES) * 100, 100).toFixed(1);
+
+  const activeProfileMeta = PROFILE_METADATA.find((p) => p.key === config?.profileKey);
+  const activeProfileLabel = activeProfileMeta
+    ? `${activeProfileMeta.label} — ${activeProfileMeta.group}`
+    : config?.profileLabel ?? null;
 
   return (
     <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 px-4 py-8 sm:px-6">
@@ -340,6 +435,59 @@ export default function SettingsPage() {
         </button>
         {llmError && (
           <p className="font-mono text-xs text-level-abaixo">{llmError}</p>
+        )}
+      </section>
+
+      {/* Profile section */}
+      <section className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="font-mono text-xs uppercase tracking-wider text-muted">Perfil de mercado</h2>
+          {activeProfileLabel && (
+            <span className="font-mono text-[10px] text-muted">{activeProfileLabel}</span>
+          )}
+        </div>
+        <select
+          value={selectedKey}
+          onChange={(e) => setSelectedKey(e.target.value)}
+          className="w-full rounded border border-surface bg-surface/40 px-3 py-2 font-mono text-sm text-foreground outline-none focus-visible:border-accent"
+        >
+          {PROFILE_GROUPS.map((group) => (
+            <optgroup key={group} label={group}>
+              {PROFILE_METADATA.filter((p) => p.group === group).map((p) => (
+                <option key={p.key} value={p.key}>{p.label}</option>
+              ))}
+            </optgroup>
+          ))}
+          <option value="custom">Perfil personalizado</option>
+        </select>
+
+        {selectedKey === "custom" && (
+          <div className="space-y-1">
+            <textarea
+              rows={10}
+              value={customProfileContent}
+              onChange={(e) => setCustomProfileContent(e.target.value)}
+              maxLength={MAX_PROFILE_LENGTH}
+              placeholder="Cole aqui o markdown do perfil de mercado…"
+              className="w-full rounded border border-surface bg-surface/40 px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted/50 outline-none focus-visible:border-accent"
+            />
+            <p className="text-right font-mono text-[10px] text-muted/60">
+              {customProfileContent.length} / {MAX_PROFILE_LENGTH}
+            </p>
+          </div>
+        )}
+
+        <button
+          type="button"
+          onClick={saveProfile}
+          disabled={profileSaving || (selectedKey === "custom" && !customProfileContent.trim())}
+          className="inline-flex items-center gap-1.5 rounded border border-accent bg-accent/10 px-3 py-2 font-mono text-xs text-accent transition-colors hover:bg-accent/20 disabled:opacity-50"
+        >
+          {profileSaving ? <Loader2 size={12} className="animate-spin" /> : profileSaved ? <Check size={12} /> : null}
+          {profileSaved ? "salvo" : "salvar perfil"}
+        </button>
+        {profileError && (
+          <p className="font-mono text-xs text-level-abaixo">{profileError}</p>
         )}
       </section>
 
