@@ -3,38 +3,49 @@
 import { RefreshCw } from "lucide-react";
 import { useState } from "react";
 
-import { useAuth } from "@/hooks/useAuth";
 import { useReportRefetch } from "@/hooks/useReportRefetch";
 
 type Status = "idle" | "loading" | "success" | "error";
 
 /**
- * Triggers an incremental sync via the server-side proxy (`POST /api/refresh`),
- * forwarding the API password as a Bearer token, then refetches the client-side
- * report. A 401 locks the session. Exposes loading / success / error states.
+ * Triggers an incremental sync via the Elysia sync API, chains batches
+ * until done, then refetches the dashboard report.
  */
 export default function SyncButton() {
-  const { token, logout } = useAuth();
   const { trigger } = useReportRefetch();
   const [status, setStatus] = useState<Status>("idle");
 
   async function handleSync(): Promise<void> {
-    if (!token) {
-      return;
-    }
+    if (status === "loading") return;
     setStatus("loading");
+
     try {
-      const response = await fetch("/api/refresh", {
+      const startRes = await fetch("/api/sync/start", {
         method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "incremental" }),
+        credentials: "include",
       });
-      if (response.status === 401) {
-        logout("Sessão expirada");
-        return;
+
+      if (!startRes.ok) {
+        throw new Error(`sync/start returned ${startRes.status}`);
       }
-      if (!response.ok) {
-        throw new Error("refresh failed");
+
+      const { jobId, done: startDone } = (await startRes.json()) as {
+        jobId: string;
+        done: boolean;
+      };
+
+      let done = startDone;
+      while (!done) {
+        const batchRes = await fetch(`/api/sync/batch/${jobId}`, {
+          method: "POST",
+          credentials: "include",
+        });
+        if (!batchRes.ok) break;
+        ({ done } = (await batchRes.json()) as { done: boolean });
       }
+
       setStatus("success");
       trigger();
     } catch {
@@ -69,9 +80,7 @@ export default function SyncButton() {
       </button>
       <span
         aria-live="polite"
-        className={`font-mono text-xs ${
-          status === "error" ? "text-level-abaixo" : "text-muted"
-        }`}
+        className={`font-mono text-xs ${status === "error" ? "text-level-abaixo" : "text-muted"}`}
       >
         {message}
       </span>

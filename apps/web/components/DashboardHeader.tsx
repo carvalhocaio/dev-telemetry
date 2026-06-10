@@ -1,13 +1,14 @@
 "use client";
 
-import { Lock, SlidersHorizontal } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { Lock, Settings, SlidersHorizontal } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
+import AiPoweredBadge from "@/components/AiPoweredBadge";
 import CustomRangeFilter from "@/components/CustomRangeFilter";
 import ModeSelector from "@/components/ModeSelector";
 import SyncButton from "@/components/SyncButton";
-import { useAuth } from "@/hooks/useAuth";
+import { signOut } from "@/lib/auth-client";
 import { resolveMode, type CustomRange } from "@/lib/range";
 import { isGranularity } from "@/types/report";
 
@@ -21,17 +22,17 @@ function readCustom(searchParams: URLSearchParams): CustomRange | undefined {
   return undefined;
 }
 
-/**
- * Compact terminal-style top bar: title, mode selector, a disclosure for the
- * custom date filter, sync button and a manual lock (logout). Reads the mode and
- * custom params from the URL so it stays in sync with the dashboard body.
- */
 export default function DashboardHeader() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const mode = resolveMode(searchParams.get("mode"));
   const custom = readCustom(searchParams);
-  const { logout } = useAuth();
   const [filterOpen, setFilterOpen] = useState(mode === "custom");
+
+  async function handleSignOut() {
+    await signOut();
+    router.replace("/login");
+  }
 
   return (
     <header className="flex flex-col gap-3 border-b border-surface pb-4">
@@ -40,6 +41,7 @@ export default function DashboardHeader() {
           <span className="text-accent">$</span> dev-telemetry
         </h1>
         <div className="flex flex-wrap items-center gap-4">
+          <AiPoweredBadge />
           <ModeSelector current={mode} />
           <button
             type="button"
@@ -59,9 +61,18 @@ export default function DashboardHeader() {
           <SyncButton />
           <button
             type="button"
-            onClick={() => logout()}
-            aria-label="Bloquear sessão"
-            title="Bloquear sessão"
+            onClick={() => router.push("/settings")}
+            aria-label="Configurações"
+            title="Configurações"
+            className="inline-flex items-center justify-center rounded-md border border-surface bg-surface/40 p-1.5 text-muted transition-colors hover:border-accent hover:text-foreground"
+          >
+            <Settings size={14} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            aria-label="Sair"
+            title="Sair"
             className="inline-flex items-center justify-center rounded-md border border-surface bg-surface/40 p-1.5 text-muted transition-colors hover:border-accent hover:text-foreground"
           >
             <Lock size={14} aria-hidden="true" />

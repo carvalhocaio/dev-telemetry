@@ -2,7 +2,7 @@ import "server-only";
 import { eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { db } from "@dev-telemetry/db/client";
-import { userSecret } from "@dev-telemetry/db/schema";
+import { userSecret, userUsage } from "@dev-telemetry/db/schema";
 import { auth } from "@/lib/auth";
 import { appCrypto } from "@/lib/app-crypto";
 
@@ -20,17 +20,17 @@ export const secretsRoutes = new Elysia({ prefix: "/me" })
     const s = await auth.api.getSession({ headers: request.headers });
     if (!s) return status(401);
 
-    const [row] = await db
-      .select()
-      .from(userSecret)
-      .where(eq(userSecret.userId, s.user.id))
-      .limit(1);
+    const [[row], [usage]] = await Promise.all([
+      db.select().from(userSecret).where(eq(userSecret.userId, s.user.id)).limit(1),
+      db.select().from(userUsage).where(eq(userUsage.userId, s.user.id)).limit(1),
+    ]);
 
     return {
       hasPat: row?.githubPatEnc != null,
       hasLlmKey: row?.llmApiKeyEnc != null,
       llmProvider: row?.llmProvider ?? null,
       llmModel: row?.llmModel ?? null,
+      bytesUsed: usage?.bytesUsed ?? 0,
     };
   })
   .put(

@@ -13,8 +13,24 @@ const jetBrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "dev-telemetry",
-  description: "Painel pessoal de performance técnica.",
+  title: {
+    template: "%s · dev-telemetry",
+    default: "dev-telemetry — telemetria para devs",
+  },
+  description:
+    "Painel pessoal de performance técnica: commits, PRs e análise de produtividade com IA.",
+  applicationName: "dev-telemetry",
+  openGraph: {
+    type: "website",
+    title: "dev-telemetry — telemetria para devs",
+    description:
+      "Painel pessoal de performance técnica: commits, PRs e análise de produtividade com IA.",
+  },
+  twitter: {
+    card: "summary",
+    title: "dev-telemetry",
+    description: "Painel pessoal de performance técnica com análise IA.",
+  },
 };
 
 export default function RootLayout({

@@ -138,7 +138,7 @@ export const reportsRoutes = new Elysia()
         model: secret.llmModel,
         apiKey,
         profileContent: DEFAULT_PROFILE,
-        level: body.level,
+        level: body.level ?? "atendendo",
         granularity,
         period: body.period,
         commits: commits.map((c) => ({
@@ -166,7 +166,7 @@ export const reportsRoutes = new Elysia()
       body: t.Object({
         granularity: t.Union(GRANULARITIES.map((g) => t.Literal(g))),
         period: t.String({ pattern: "^\\d{4}-\\d{2}-\\d{2}$" }),
-        level: t.String(),
+        level: t.Optional(t.String()),
       }),
     },
   );

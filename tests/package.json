@@ -1,0 +1,21 @@
+{
+  "name": "tests",
+  "private": true,
+  "version": "0.0.1",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:bench": "vitest bench"
+  },
+  "dependencies": {
+    "@dev-telemetry/ai": "workspace:*",
+    "@dev-telemetry/core": "workspace:*",
+    "@dev-telemetry/crypto": "workspace:*",
+    "@dev-telemetry/github": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "typescript": "^5",
+    "vitest": "^4.1.8"
+  }
+}
