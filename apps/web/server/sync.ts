@@ -1,5 +1,5 @@
 import "server-only";
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { db } from "@dev-telemetry/db/client";
 import { syncJob, user, userSecret } from "@dev-telemetry/db/schema";
@@ -20,9 +20,10 @@ async function fetchGitHubUser(
       Authorization: `Bearer ${pat}`,
       "User-Agent": "dev-telemetry/1.0",
     },
+    signal: AbortSignal.timeout(10_000),
   });
   if (!resp.ok) {
-    throw new Error(`GitHub returned ${resp.status} — check your PAT.`);
+    throw new Error("PAT inválido ou sem permissões suficientes.");
   }
   const data = (await resp.json()) as { id: number; login: string };
   return { id: data.id, login: data.login };
@@ -46,6 +47,17 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
       if (!s) return status(401);
 
       const userId = s.user.id;
+
+      // Prevent concurrent sync jobs for the same user — avoids GitHub rate-limit exhaustion.
+      const [running] = await db
+        .select({ id: syncJob.id })
+        .from(syncJob)
+        .where(and(eq(syncJob.userId, userId), eq(syncJob.status, "running")))
+        .limit(1);
+
+      if (running) {
+        return status(409, { error: "Sync já em andamento." });
+      }
 
       // Require PAT
       const [secret] = await db

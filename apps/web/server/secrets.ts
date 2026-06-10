@@ -68,12 +68,14 @@ export const secretsRoutes = new Elysia({ prefix: "/me" })
     },
     {
       body: t.Object({
-        pat: t.Optional(t.String({ minLength: 1 })),
+        // maxLength guards against oversized payload storage abuse.
+        // GitHub PATs are ~40 chars; LLM API keys are ~100 chars — 500 is generous.
+        pat: t.Optional(t.String({ minLength: 1, maxLength: 500 })),
         llmProvider: t.Optional(
           t.Union(LLM_PROVIDERS.map((p) => t.Literal(p))),
         ),
-        llmApiKey: t.Optional(t.String({ minLength: 1 })),
-        llmModel: t.Optional(t.String({ minLength: 1 })),
+        llmApiKey: t.Optional(t.String({ minLength: 1, maxLength: 500 })),
+        llmModel: t.Optional(t.String({ minLength: 1, maxLength: 200 })),
       }),
     },
   );

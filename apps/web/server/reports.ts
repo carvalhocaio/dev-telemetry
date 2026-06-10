@@ -113,7 +113,7 @@ export const reportsRoutes = new Elysia()
             lt(commit.authoredAt, periodEnd),
           ),
         )
-        .limit(50);
+        .limit(30); // matches generateNarrative internal cap
 
       // Fetch PRs for the period
       const prs = await db

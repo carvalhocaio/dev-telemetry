@@ -42,16 +42,8 @@ function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 }
 
-function progressBar(used: number, total: number, width = 20): string {
-  const pct = Math.min(used / total, 1);
-  const filled = Math.round(pct * width);
-  return "█".repeat(filled) + "░".repeat(width - filled);
-}
-
-function syncBar(job: SyncJob, width = 20): string {
-  if (job.reposTotal === 0) return "░".repeat(width);
-  const pct = job.reposDone / job.reposTotal;
-  const filled = Math.round(pct * width);
+function terminalBar(value: number, total: number, width = 20): string {
+  const filled = total > 0 ? Math.round(Math.min(value / total, 1) * width) : 0;
   return "█".repeat(filled) + "░".repeat(width - filled);
 }
 
@@ -66,6 +58,7 @@ export default function SettingsPage() {
   const [pat, setPat] = useState("");
   const [patSaving, setPatSaving] = useState(false);
   const [patSaved, setPatSaved] = useState(false);
+  const [patError, setPatError] = useState<string | null>(null);
 
   // LLM form
   const [provider, setProvider] = useState<LlmProvider>("gemini");
@@ -73,6 +66,7 @@ export default function SettingsPage() {
   const [apiKey, setApiKey] = useState("");
   const [llmSaving, setLlmSaving] = useState(false);
   const [llmSaved, setLlmSaved] = useState(false);
+  const [llmError, setLlmError] = useState<string | null>(null);
 
   // Sync state
   const [syncing, setSyncing] = useState(false);
@@ -145,13 +139,18 @@ export default function SettingsPage() {
   async function savePat() {
     if (!pat.trim()) return;
     setPatSaving(true);
+    setPatError(null);
     try {
-      await fetch("/api/me/secrets", {
+      const res = await fetch("/api/me/secrets", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ pat: pat.trim() }),
         credentials: "include",
       });
+      if (!res.ok) {
+        setPatError("Falha ao salvar — tente novamente.");
+        return;
+      }
       setPat("");
       setPatSaved(true);
       setConfig((prev) => prev ? { ...prev, hasPat: true } : prev);
@@ -164,13 +163,18 @@ export default function SettingsPage() {
   async function saveLlm() {
     if (!apiKey.trim()) return;
     setLlmSaving(true);
+    setLlmError(null);
     try {
-      await fetch("/api/me/secrets", {
+      const res = await fetch("/api/me/secrets", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ llmProvider: provider, llmApiKey: apiKey.trim(), llmModel: model }),
         credentials: "include",
       });
+      if (!res.ok) {
+        setLlmError("Falha ao salvar — tente novamente.");
+        return;
+      }
       setApiKey("");
       setLlmSaved(true);
       setConfig((prev) => prev ? { ...prev, hasLlmKey: true, llmProvider: provider, llmModel: model } : prev);
@@ -285,6 +289,9 @@ export default function SettingsPage() {
             {patSaved ? "salvo" : "salvar"}
           </button>
         </div>
+        {patError && (
+          <p className="font-mono text-xs text-level-abaixo">{patError}</p>
+        )}
       </section>
 
       {/* LLM section */}
@@ -331,6 +338,9 @@ export default function SettingsPage() {
           {llmSaving ? <Loader2 size={12} className="animate-spin" /> : llmSaved ? <Check size={12} /> : null}
           {llmSaved ? "salvo" : "salvar configuração LLM"}
         </button>
+        {llmError && (
+          <p className="font-mono text-xs text-level-abaixo">{llmError}</p>
+        )}
       </section>
 
       {/* Storage meter */}
@@ -338,7 +348,7 @@ export default function SettingsPage() {
         <h2 className="font-mono text-xs uppercase tracking-wider text-muted">Armazenamento</h2>
         <div className="rounded border border-surface bg-surface/40 p-4 font-mono text-xs space-y-1">
           <p className="text-muted">
-            [{progressBar(bytesUsed, QUOTA_BYTES)}]{" "}
+            [{terminalBar(bytesUsed, QUOTA_BYTES)}]{" "}
             <span className="text-foreground">{usedPct}%</span>
           </p>
           <p className="text-muted">
@@ -357,7 +367,7 @@ export default function SettingsPage() {
             {syncJob.status === "running" || syncing ? (
               <>
                 <p className="text-muted">
-                  [{syncBar(syncJob)}]{" "}
+                  [{terminalBar(syncJob.reposDone, syncJob.reposTotal)}]{" "}
                   <span className="text-foreground">
                     {syncJob.reposTotal > 0
                       ? `${syncJob.reposDone}/${syncJob.reposTotal} repos`

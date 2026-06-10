@@ -37,13 +37,16 @@ export default function SyncButton() {
       };
 
       let done = startDone;
-      while (!done) {
+      let batches = 0;
+      const MAX_BATCHES = 500;
+      while (!done && batches < MAX_BATCHES) {
         const batchRes = await fetch(`/api/sync/batch/${jobId}`, {
           method: "POST",
           credentials: "include",
         });
         if (!batchRes.ok) break;
         ({ done } = (await batchRes.json()) as { done: boolean });
+        batches++;
       }
 
       setStatus("success");
