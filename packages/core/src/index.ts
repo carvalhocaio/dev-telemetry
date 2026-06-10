@@ -8,6 +8,7 @@ export {
   classify,
 } from "./classifier.js";
 export { computeMetrics } from "./metrics.js";
+export { resolveProfile } from "./profile.js";
 export {
   buildReport,
   summarizeWindow,

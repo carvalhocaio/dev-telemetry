@@ -10,10 +10,10 @@
  * the rest of the domain free of `Date` objects.
  */
 
-import { commit, pullRequest } from "@dev-telemetry/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { commit, pullRequest, repository } from "@dev-telemetry/db/schema";
+import { and, eq, ne, sql, type SQL } from "drizzle-orm";
 
-import type { Granularity, PeriodMetrics } from "./types.js";
+import type { Granularity, PeriodMetrics, Scope } from "./types.js";
 
 /** Anything Drizzle-shaped that can run a `.execute()` query. */
 interface Executor {
@@ -25,6 +25,25 @@ const TRUNC_UNIT: Record<Granularity, string> = {
   weekly: "week",
   monthly: "month",
 };
+
+/**
+ * Optional repository-scope filter on the joined `repository` row.
+ *
+ * Compares the owner segment of `repository.fullName` (everything before the
+ * first `/`) against `githubLogin`. Returns `undefined` when no scoping applies
+ * (scope `all`, or scope set but `githubLogin` missing), so callers can omit
+ * the join/predicate entirely.
+ */
+function scopePredicate(
+  scope: Scope,
+  githubLogin: string | undefined,
+): SQL | undefined {
+  if (scope === "all" || !githubLogin) return undefined;
+  const owner = sql`split_part(${repository.fullName}, '/', 1)`;
+  return scope === "personal"
+    ? eq(owner, githubLogin)
+    : ne(owner, githubLogin);
+}
 
 type CommitAggregate = {
   commitCount: number;
@@ -65,8 +84,13 @@ async function commitAggregates(
   db: Executor,
   userId: string,
   unit: string,
+  scopeFilter: SQL | undefined,
 ): Promise<Map<string, CommitAggregate>> {
   const bucket = sql<string>`date_trunc(${unit}, ${commit.authoredAt})::date`;
+  const join = scopeFilter
+    ? sql`join ${repository} on ${eq(commit.repoId, repository.id)}`
+    : sql``;
+  const where = and(eq(commit.userId, userId), scopeFilter);
   const rows = (await db.execute(
     sql`
       select
@@ -76,7 +100,8 @@ async function commitAggregates(
         coalesce(sum(${commit.deletions}), 0) as "deletions",
         count(distinct ${commit.authoredAt}::date) as "active_days"
       from ${commit}
-      where ${eq(commit.userId, userId)}
+      ${join}
+      where ${where}
       group by ${bucket}
     `,
   )) as unknown as Iterable<CommitRow>;
@@ -97,8 +122,13 @@ async function prAggregates(
   db: Executor,
   userId: string,
   unit: string,
+  scopeFilter: SQL | undefined,
 ): Promise<Map<string, PrAggregate>> {
   const bucket = sql<string>`date_trunc(${unit}, ${pullRequest.ghCreatedAt})::date`;
+  const join = scopeFilter
+    ? sql`join ${repository} on ${eq(pullRequest.repoId, repository.id)}`
+    : sql``;
+  const where = and(eq(pullRequest.userId, userId), scopeFilter);
   const rows = (await db.execute(
     sql`
       select
@@ -106,7 +136,8 @@ async function prAggregates(
         count(*) as "pr_count",
         count(*) filter (where ${eq(pullRequest.state, "merged")}) as "pr_merged"
       from ${pullRequest}
-      where ${eq(pullRequest.userId, userId)}
+      ${join}
+      where ${where}
       group by ${bucket}
     `,
   )) as unknown as Iterable<PrRow>;
@@ -124,16 +155,23 @@ async function prAggregates(
 /**
  * Computes per-period metrics for `userId` at the given granularity, sorted by
  * period ascending. Each row aggregates commit + PR activity for one bucket.
+ *
+ * When `scope` is `org` or `personal` and `githubLogin` is provided, activity
+ * is restricted to repositories whose `fullName` owner matches (personal) or
+ * differs from (org) `githubLogin`.
  */
 export async function computeMetrics(
   db: Executor,
   userId: string,
   granularity: Granularity,
+  scope: Scope = "all",
+  githubLogin?: string,
 ): Promise<PeriodMetrics[]> {
   const unit = TRUNC_UNIT[granularity];
+  const scopeFilter = scopePredicate(scope, githubLogin);
   const [commits, pulls] = await Promise.all([
-    commitAggregates(db, userId, unit),
-    prAggregates(db, userId, unit),
+    commitAggregates(db, userId, unit, scopeFilter),
+    prAggregates(db, userId, unit, scopeFilter),
   ]);
 
   const periods = [

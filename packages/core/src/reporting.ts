@@ -26,6 +26,7 @@ import {
   type PeriodMetrics,
   type PeriodReport,
   type Report,
+  type Scope,
   mergeRate,
   type WindowSummary,
 } from "./types.js";
@@ -45,6 +46,10 @@ export interface BuildReportInput {
   start?: string;
   /** Inclusive window end, "YYYY-MM-DD". Omit for no upper bound. */
   end?: string;
+  /** Repository scope filter. Defaults to `all` (no filter). */
+  scope?: Scope;
+  /** User's GitHub login — required when `scope` is `org` or `personal`. */
+  githubLogin?: string;
 }
 
 const round4 = (value: number): number => Math.round(value * 1e4) / 1e4;
@@ -146,9 +151,15 @@ export async function buildReport(
   input: BuildReportInput,
   today: Date = new Date(),
 ): Promise<Report> {
-  const { db, userId, granularity, start, end } = input;
+  const { db, userId, granularity, start, end, scope, githubLogin } = input;
 
-  const metrics = await computeMetrics(db, userId, granularity);
+  const metrics = await computeMetrics(
+    db,
+    userId,
+    granularity,
+    scope ?? "all",
+    githubLogin,
+  );
   const classifications = classify(metrics);
   const byPeriod = new Map(metrics.map((m) => [m.period, m]));
 

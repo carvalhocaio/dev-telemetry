@@ -12,6 +12,16 @@ export type Level = "abaixo" | "atendendo" | "acima" | "muito_acima";
 /** Bucketing resolution sent to the API as `granularity`. */
 export type Granularity = "daily" | "weekly" | "monthly";
 
+/**
+ * Repository scope filter. Derived by comparing the owner segment of
+ * `repository.fullName` (everything before the first `/`) against the user's
+ * `githubLogin`:
+ *   - `personal`: owner === githubLogin,
+ *   - `org`:      owner !== githubLogin,
+ *   - `all`:      no filter (default).
+ */
+export type Scope = "all" | "org" | "personal";
+
 /** Component scores that make up the composite (each roughly 0..1). */
 export interface Components {
   throughput: number;
