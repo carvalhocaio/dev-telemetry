@@ -1,14 +1,19 @@
-run-api:
-	cd api && uv run granian --interface asgi main:app --reload --access-log
-
 run-web:
-	cd web && rm -rf .next/ && pnpm dev
+	cd apps/web && bun dev
 
 dev:
 	mprocs
 
-# Fallback sem instalar nada: roda os dois em paralelo (saídas intercaladas)
-dev-parallel:
-	$(MAKE) -j2 run-api run-web
+install:
+	bun install
 
-.PHONY: run-api run-web dev dev-parallel
+test:
+	bun run test
+
+typecheck:
+	bun run typecheck
+
+lint:
+	bun run lint
+
+.PHONY: run-web dev install test typecheck lint
