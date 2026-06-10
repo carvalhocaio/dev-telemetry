@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { signIn } from "@/lib/auth-client";
 
@@ -11,7 +12,7 @@ export default function LoginPage() {
     setPending(true);
     setError(null);
     try {
-      await signIn.social({ provider: "github", callbackURL: "/" });
+      await signIn.social({ provider: "github", callbackURL: "/dashboard" });
     } catch {
       setError("falha ao iniciar autenticação — tente novamente.");
       setPending(false);
@@ -80,6 +81,10 @@ export default function LoginPage() {
           acesso via GitHub OAuth · read:user
           <br />
           seus dados ficam no seu perfil
+          <br />
+          <Link href="/" className="transition-colors hover:text-accent">
+            saiba mais
+          </Link>
         </p>
       </div>
     </main>

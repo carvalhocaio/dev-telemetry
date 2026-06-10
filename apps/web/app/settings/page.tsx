@@ -324,7 +324,7 @@ export default function SettingsPage() {
       <div className="flex items-center justify-between">
         <button
           type="button"
-          onClick={() => router.push("/")}
+          onClick={() => router.push("/dashboard")}
           className="flex items-center gap-2 font-mono text-xs text-muted hover:text-accent transition-colors"
         >
           <ArrowLeft size={12} aria-hidden="true" />
