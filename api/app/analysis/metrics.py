@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 from enum import Enum
 
 from sqlalchemy import Date, cast, func, select
@@ -8,12 +8,26 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models import Commit, PullRequest
 
 
+def bucket_start(granularity: "Granularity", day: date) -> date:
+    """Return the period start for ``day``, matching Postgres ``date_trunc``.
+
+    Postgres ``date_trunc('week', ...)`` snaps to Monday (ISO weekday 1).
+    """
+    if granularity is Granularity.DAILY:
+        return day
+    if granularity is Granularity.WEEKLY:
+        return day - timedelta(days=day.weekday())
+    return day.replace(day=1)
+
+
 class Granularity(str, Enum):
+    DAILY = "daily"
     WEEKLY = "weekly"
     MONTHLY = "monthly"
 
 
 _TRUNC: dict[Granularity, str] = {
+    Granularity.DAILY: "day",
     Granularity.WEEKLY: "week",
     Granularity.MONTHLY: "month",
 }

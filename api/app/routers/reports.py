@@ -22,8 +22,18 @@ SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 
 @router.get("/{granularity}", response_model=Report)
-async def get_report(granularity: Granularity, session: SessionDep) -> Report:
-    return await ReportService(session).build(granularity)
+async def get_report(
+    granularity: Granularity,
+    session: SessionDep,
+    start: date | None = None,
+    end: date | None = None,
+) -> Report:
+    if start is not None and end is not None and start > end:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="O parâmetro 'start' deve ser anterior ou igual a 'end'.",
+        )
+    return await ReportService(session).build(granularity, start=start, end=end)
 
 
 @router.get("/{granularity}/{period}/narrative", response_model=NarrativeResponse)
