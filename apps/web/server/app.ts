@@ -1,6 +1,7 @@
 import "server-only";
 import { Elysia } from "elysia";
 import { auth } from "@/lib/auth";
+import { profilesRoutes } from "./profiles";
 import { reportsRoutes } from "./reports";
 import { secretsRoutes } from "./secrets";
 import { syncRoutes } from "./sync";
@@ -17,6 +18,7 @@ export const app = new Elysia({ prefix: "/api" })
     };
   })
   .use(secretsRoutes)
+  .use(profilesRoutes)
   .use(reportsRoutes)
   .use(syncRoutes);
 
