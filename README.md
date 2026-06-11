@@ -18,6 +18,10 @@ data-driven view of their own work.
 - **Multi-LLM support** — Anthropic Claude, OpenAI GPT, and Google Gemini
 - **Org/personal scope filter** — include or exclude organization activity
 
+## Preview
+
+<img width="50%" height="50%" alt="Screenshot From 2026-06-11 13-13-47" src="https://github.com/user-attachments/assets/a8d7af6d-7d35-43ec-8df9-c5cfce95e029" />
+
 ## Tech stack
 
 | Area      | Technology                              | Notes                                            |
