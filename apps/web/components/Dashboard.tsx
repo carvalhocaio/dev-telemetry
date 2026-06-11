@@ -1,9 +1,13 @@
 "use client";
 
+import { SlidersHorizontal } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
+import CustomRangeFilter from "@/components/CustomRangeFilter";
 import DashboardView from "@/components/DashboardView";
+import ModeSelector from "@/components/ModeSelector";
+import SyncButton from "@/components/SyncButton";
 import { fillPeriods } from "@/lib/calendar";
 import {
   resolveMode,
@@ -48,6 +52,7 @@ export default function Dashboard() {
 
   const { register } = useReportRefetch();
   const [coverage, setCoverage] = useState<Coverage | null>(null);
+  const [filterOpen, setFilterOpen] = useState(mode === "custom");
 
   const customRes = custom?.res;
   const customStart = custom?.start;
@@ -86,25 +91,62 @@ export default function Dashboard() {
     setCoverage(report.meta.coverage);
   }
 
+  const modeBar = (
+    <>
+      <div className="flex items-center justify-between gap-3">
+        <SyncButton />
+        <div className="flex items-center gap-3">
+          <ModeSelector current={mode} />
+          <button
+            type="button"
+            onClick={() => setFilterOpen((open) => !open)}
+            aria-expanded={filterOpen}
+            aria-controls="custom-range-filter"
+            aria-label="Filtro de data personalizado"
+            title="Filtro de data personalizado"
+            className={`inline-flex items-center justify-center rounded-md border p-1.5 transition-colors hover:border-accent hover:text-foreground ${
+              mode === "custom"
+                ? "border-accent text-accent"
+                : "border-surface bg-surface/40 text-muted"
+            }`}
+          >
+            <SlidersHorizontal size={14} aria-hidden="true" />
+          </button>
+        </div>
+      </div>
+      {filterOpen && (
+        <div id="custom-range-filter">
+          <CustomRangeFilter value={custom} />
+        </div>
+      )}
+    </>
+  );
+
   if (status === "loading") {
     return (
-      <section
-        aria-busy="true"
-        className="rounded-lg border border-surface bg-surface/40 p-6"
-      >
-        <p className="font-mono text-sm text-muted">Carregando telemetria…</p>
-      </section>
+      <>
+        {modeBar}
+        <section
+          aria-busy="true"
+          className="rounded-lg border border-surface bg-surface/40 p-6"
+        >
+          <p className="font-mono text-sm text-muted">Carregando telemetria…</p>
+        </section>
+      </>
     );
   }
 
   if (status === "error" || !report) {
     return (
-      <section className="rounded-lg border border-level-abaixo/40 bg-surface/40 p-6">
-        <p className="font-mono text-sm text-level-abaixo">
-          {error ??
-            "Não foi possível carregar os dados da telemetria. Verifique se a API está no ar e tente novamente."}
-        </p>
-      </section>
+      <>
+        {modeBar}
+        <section className="rounded-lg border border-level-abaixo/40 bg-surface/40 p-6">
+          <p className="font-mono text-sm text-level-abaixo">
+            {error ??
+              "Não foi possível carregar os dados da telemetria. Verifique se a API está no ar e tente novamente."}
+          </p>
+        </section>
+      </>
     );
   }
 
@@ -117,11 +159,14 @@ export default function Dashboard() {
   const hasData = report.periods.length > 0;
 
   return (
-    <DashboardView
-      resolution={range.resolution}
-      report={report}
-      items={items}
-      hasData={hasData}
-    />
+    <>
+      {modeBar}
+      <DashboardView
+        resolution={range.resolution}
+        report={report}
+        items={items}
+        hasData={hasData}
+      />
+    </>
   );
 }
