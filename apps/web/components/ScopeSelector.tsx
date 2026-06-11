@@ -33,7 +33,7 @@ export default function ScopeSelector({ currentScope, currentMode, orgs = [] }: 
         return (
           <Link
             key={scope}
-            href={`/?scope=${scope}&mode=${currentMode}`}
+            href={`/dashboard?scope=${scope}&mode=${currentMode}`}
             aria-current={active ? "page" : undefined}
             className={`rounded px-3 py-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
               active ? "bg-accent text-background" : "text-muted hover:text-foreground"
@@ -48,7 +48,7 @@ export default function ScopeSelector({ currentScope, currentMode, orgs = [] }: 
         <CustomSelect
           inline
           value={activeOrg}
-          onChange={(org) => router.push(`/?scope=org:${org}&mode=${currentMode}`)}
+          onChange={(org) => router.push(`/dashboard?scope=org:${org}&mode=${currentMode}`)}
           options={[
             { value: "", label: "org" },
             ...orgs.map((o) => ({ value: o, label: o })),

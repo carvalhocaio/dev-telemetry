@@ -41,7 +41,7 @@ export default function CustomRangeFilter({ value }: CustomRangeFilterProps) {
       return;
     }
     const params = new URLSearchParams({ mode: "custom", res, start, end });
-    router.push(`/?${params.toString()}`);
+    router.push(`/dashboard?${params.toString()}`);
   }
 
   return (

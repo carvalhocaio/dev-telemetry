@@ -28,7 +28,7 @@ export default function ModeSelector({ current }: ModeSelectorProps) {
         return (
           <Link
             key={mode}
-            href={`/?mode=${mode}`}
+            href={`/dashboard?mode=${mode}`}
             aria-current={active ? "true" : undefined}
             className={`rounded px-3 py-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
               active
