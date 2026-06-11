@@ -2,6 +2,8 @@
 
 > Personal developer performance dashboard — powered by your GitHub activity
 
+**Live:** https://dev-telemetry-one.vercel.app
+
 dev-telemetry ingests your GitHub activity (commits and pull requests), stores
 your credentials encrypted at rest, computes performance metrics, and generates
 AI-powered narratives that explain how your output is trending over time. It is
@@ -46,7 +48,7 @@ data-driven view of their own work.
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/dev-telemetry/dev-telemetry.git
+   git clone https://github.com/carvalhocaio/dev-telemetry.git
    cd dev-telemetry
    ```
 2. Copy the example environment file and fill in the values:
@@ -71,7 +73,7 @@ data-driven view of their own work.
 | `BETTER_AUTH_URL`              | Base URL (default `http://localhost:3000`)    | No       |
 | `GITHUB_CLIENT_ID`             | GitHub OAuth app client ID                    | Yes      |
 | `GITHUB_CLIENT_SECRET`         | GitHub OAuth app client secret                | Yes      |
-| `ENCRYPTION_KEY`               | 32-byte hex key for AES-256-GCM               | Yes      |
+| `SECRET_ENCRYPTION_KEY`        | 32-byte hex key for AES-256-GCM               | Yes      |
 | `ANTHROPIC_API_KEY`            | Enables Claude narratives                     | No       |
 | `OPENAI_API_KEY`               | Enables GPT narratives                        | No       |
 | `GOOGLE_GENERATIVE_AI_API_KEY` | Enables Gemini narratives                     | No       |
@@ -109,7 +111,7 @@ Contributions are welcome. Before submitting changes, run the test suite and
 make sure linting passes. Keep pull requests focused on a single concern, and
 describe the motivation in the PR body. For larger changes, open an issue first
 to discuss the approach. Open an issue or PR at
-[github.com/dev-telemetry/dev-telemetry](https://github.com/dev-telemetry/dev-telemetry).
+[github.com/carvalhocaio/dev-telemetry](https://github.com/carvalhocaio/dev-telemetry).
 
 ## License
 

@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-06-11
+
+### Fixed
+- Lazy-initialize the database singleton via Proxy so importing `@dev-telemetry/db` at build time no longer requires `DATABASE_URL` to be set
+- Switch workspace packages from `moduleResolution: NodeNext` to `bundler` so Turbopack can resolve bare TypeScript imports without `.js` extensions
+
+### Changed
+- Move Vercel configuration to `apps/web/vercel.json` and set `rootDirectory: apps/web` on the project so the build runs from the correct workspace package
+- Declare server-side env vars in `turbo.json` build task so Turborepo passes them through to the Next.js build process
+- Add `turbopack.root` and `outputFileTracingRoot` in `next.config.ts` pointing to the monorepo root so Turbopack resolves hoisted `node_modules` correctly
+
 ## [1.0.0] - 2026-06-11
 
 ### Added
