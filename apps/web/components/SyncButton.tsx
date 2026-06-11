@@ -14,10 +14,12 @@ type Status = "idle" | "loading" | "success" | "error";
 export default function SyncButton() {
   const { trigger } = useReportRefetch();
   const [status, setStatus] = useState<Status>("idle");
+  const [syncError, setSyncError] = useState<string | null>(null);
 
   async function handleSync(): Promise<void> {
     if (status === "loading") return;
     setStatus("loading");
+    setSyncError(null);
 
     try {
       const startRes = await fetch("/api/sync/start", {
@@ -27,16 +29,23 @@ export default function SyncButton() {
         credentials: "include",
       });
 
-      if (!startRes.ok) {
-        throw new Error(`sync/start returned ${startRes.status}`);
+      let jobId: string;
+      let done: boolean;
+
+      if (startRes.status === 409) {
+        // A job is already running — resume it instead of failing.
+        const currentRes = await fetch("/api/sync/current", { credentials: "include" });
+        if (!currentRes.ok) throw new Error("Não foi possível recuperar o sync em andamento.");
+        const current = await currentRes.json() as { id: string; status: string } | null;
+        if (!current?.id) throw new Error("Sync em andamento não encontrado.");
+        jobId = current.id;
+        done = current.status !== "running";
+      } else if (!startRes.ok) {
+        const body = await startRes.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `sync/start returned ${startRes.status}`);
+      } else {
+        ({ jobId, done } = (await startRes.json()) as { jobId: string; done: boolean });
       }
-
-      const { jobId, done: startDone } = (await startRes.json()) as {
-        jobId: string;
-        done: boolean;
-      };
-
-      let done = startDone;
       let batches = 0;
       const MAX_BATCHES = 500;
       while (!done && batches < MAX_BATCHES) {
@@ -51,8 +60,10 @@ export default function SyncButton() {
 
       setStatus("success");
       trigger();
-    } catch {
+    } catch (err) {
+      console.error("[SyncButton]", err);
       setStatus("error");
+      if (err instanceof Error) setSyncError(err.message);
     }
   }
 
@@ -62,7 +73,7 @@ export default function SyncButton() {
       : status === "success"
         ? "Atualizado."
         : status === "error"
-          ? "Falha ao sincronizar."
+          ? syncError ?? "Falha ao sincronizar."
           : "";
 
   return (

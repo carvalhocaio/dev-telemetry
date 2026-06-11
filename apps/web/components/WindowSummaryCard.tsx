@@ -3,6 +3,7 @@ import { LEVEL_META, type WindowSummary } from "@/types/report";
 interface WindowSummaryCardProps {
   window: WindowSummary;
   smallSample: boolean;
+  profileLabel?: string | null;
 }
 
 const MAX_BLOCKS = 24;
@@ -39,6 +40,7 @@ function formatRange(start: string | null, end: string | null): string {
 export default function WindowSummaryCard({
   window,
   smallSample,
+  profileLabel,
 }: WindowSummaryCardProps) {
   const filled = Math.max(
     1,
@@ -74,9 +76,14 @@ export default function WindowSummaryCard({
             </span>
           )}
         </div>
-        <span className="font-mono text-3xl tabular-nums text-foreground">
-          {window.composite.toFixed(2)}
-        </span>
+        <div className="flex flex-col items-end gap-0.5">
+          <span className="font-mono text-3xl tabular-nums text-foreground">
+            {window.composite.toFixed(2)}
+          </span>
+          {profileLabel && (
+            <span className="font-mono text-[10px] text-muted">{profileLabel}</span>
+          )}
+        </div>
       </div>
 
       <div

@@ -10,10 +10,9 @@ import type { ChartItem, Resolution, Report } from "@/types/report";
 interface DashboardViewProps {
   resolution: Resolution;
   report: Report;
-  /** Gap-filled chart slots, oldest → newest. */
   items: ChartItem[];
-  /** Whether the window contains any real period data. */
   hasData: boolean;
+  profileLabel?: string | null;
 }
 
 /**
@@ -30,6 +29,7 @@ export default function DashboardView({
   report,
   items,
   hasData,
+  profileLabel,
 }: DashboardViewProps) {
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
 
@@ -38,6 +38,7 @@ export default function DashboardView({
       <WindowSummaryCard
         window={report.window}
         smallSample={report.meta.smallSample}
+        profileLabel={profileLabel}
       />
       <TerminalChart
         items={items}

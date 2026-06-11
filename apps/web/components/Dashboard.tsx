@@ -53,6 +53,14 @@ export default function Dashboard() {
   const { register } = useReportRefetch();
   const [coverage, setCoverage] = useState<Coverage | null>(null);
   const [filterOpen, setFilterOpen] = useState(mode === "custom");
+  const [profileLabel, setProfileLabel] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch("/api/me/profile", { credentials: "include" })
+      .then((r) => r.ok ? r.json() as Promise<{ label: string; group: string }> : null)
+      .then((d) => { if (d?.label) setProfileLabel(d.group ? `${d.label} — ${d.group}` : d.label); })
+      .catch(() => null);
+  }, []);
 
   const customRes = custom?.res;
   const customStart = custom?.start;
@@ -166,6 +174,7 @@ export default function Dashboard() {
         report={report}
         items={items}
         hasData={hasData}
+        profileLabel={profileLabel}
       />
     </>
   );
