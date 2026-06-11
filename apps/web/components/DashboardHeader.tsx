@@ -1,6 +1,6 @@
 "use client";
 
-import { Lock, Settings } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -54,9 +54,9 @@ export default function DashboardHeader() {
             onClick={handleSignOut}
             aria-label="Sair"
             title="Sair"
-            className="inline-flex items-center justify-center rounded-md border border-surface bg-surface/40 p-1.5 text-muted transition-colors hover:border-accent hover:text-foreground"
+            className="inline-flex items-center justify-center rounded-md border border-surface bg-surface/40 p-1.5 text-muted transition-colors hover:border-level-abaixo hover:text-level-abaixo"
           >
-            <Lock size={14} aria-hidden="true" />
+            <LogOut size={14} aria-hidden="true" />
           </button>
         </div>
       </div>
