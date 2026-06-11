@@ -20,3 +20,4 @@ out/
 
 # test coverage
 coverage/
+.vercel
