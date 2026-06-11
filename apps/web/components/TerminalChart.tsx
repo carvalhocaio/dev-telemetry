@@ -10,15 +10,21 @@ interface TerminalChartProps {
   items: ChartItem[];
   selectedPeriod: string | null;
   onSelect: (period: string) => void;
+  resolution: string;
 }
 
 /** At or below this count the chart is centered and bars get more emphasis. */
 const FEW_BARS = 10;
 
-function formatLabel(period: string): string {
-  // "2026-06-09" -> "06/09"
-  const [, month, day] = period.split("-");
-  return `${month}/${day}`;
+const MONTHS_PT = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+
+function formatLabel(period: string, resolution: string): string {
+  const [year, month, day] = period.split("-");
+  const monthName = MONTHS_PT[Number(month) - 1];
+  if (resolution === "monthly") {
+    return `${monthName}/${year.slice(2)}`;
+  }
+  return `${monthName}/${day}`;
 }
 
 /**
@@ -42,6 +48,7 @@ export default function TerminalChart({
   items,
   selectedPeriod,
   onSelect,
+  resolution,
 }: TerminalChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const emphasis = items.length <= FEW_BARS;
@@ -102,7 +109,7 @@ export default function TerminalChart({
               <div key={item.period}>
                 <Bar
                   noData
-                  label={formatLabel(item.period)}
+                  label={formatLabel(item.period, resolution)}
                   ariaLabel={`Sem atividade em ${item.period}`}
                   emphasis={emphasis}
                 />
@@ -117,7 +124,7 @@ export default function TerminalChart({
                 value={item.composite}
                 level={item.level}
                 active={item.period === selectedPeriod}
-                label={formatLabel(item.period)}
+                label={formatLabel(item.period, resolution)}
                 ariaLabel={`Período ${item.period}, nível ${LEVEL_META[item.level].label}, score ${item.composite.toFixed(2)}`}
                 emphasis={emphasis}
                 onSelect={() => onSelect(item.period)}

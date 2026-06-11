@@ -16,7 +16,7 @@ import {
 } from "@/lib/range";
 import { useReport } from "@/hooks/useReport";
 import { useReportRefetch } from "@/hooks/useReportRefetch";
-import { isGranularity, isScope, type Coverage, type Scope } from "@/types/report";
+import { isGranularity, isScope, type Scope } from "@/types/report";
 
 /**
  * Reads the custom-mode params from the URL, returning them only when complete.
@@ -31,18 +31,6 @@ function readCustom(searchParams: URLSearchParams): CustomRange | undefined {
   return undefined;
 }
 
-/**
- * Client entry point for the dashboard body. Maps the URL mode to API params
- * (`lib/range.ts`), fetches the report (`useReport`), gap-fills the chart
- * (`lib/calendar.ts`) and renders loading / error / data states.
- *
- * Adaptive "todo" resolution: the request resolution comes from the coverage of
- * the previous report. The first fetch has no coverage, so `resolveRange`
- * defaults "todo" to monthly; when the report arrives we store its coverage in
- * state, which re-runs `resolveRange`. For a short history this switches to
- * weekly, changing the request key and triggering a single refetch at the finer
- * resolution. Coverage is only consulted for "todo"; other modes ignore it.
- */
 export default function Dashboard() {
   const searchParams = useSearchParams();
   const mode = resolveMode(searchParams.get("mode"));
@@ -51,7 +39,6 @@ export default function Dashboard() {
   const scope: Scope = isScope(rawScope) ? rawScope : "all";
 
   const { register } = useReportRefetch();
-  const [coverage, setCoverage] = useState<Coverage | null>(null);
   const [filterOpen, setFilterOpen] = useState(mode === "custom");
   const [profileLabel, setProfileLabel] = useState<string | null>(null);
 
@@ -72,9 +59,9 @@ export default function Dashboard() {
         customRes && customStart && customEnd
           ? { res: customRes, start: customStart, end: customEnd }
           : undefined;
-      return resolveRange(mode, c, new Date(), mode === "todo" ? coverage : null);
+      return resolveRange(mode, c, new Date());
     },
-    [mode, customRes, customStart, customEnd, coverage],
+    [mode, customRes, customStart, customEnd],
   );
 
   const { status, report, error, refetch } = useReport(range.resolution, {
@@ -86,18 +73,6 @@ export default function Dashboard() {
   useEffect(() => {
     register(refetch);
   }, [register, refetch]);
-
-  // Capture coverage so the "todo" mode can adapt its resolution. Derived during
-  // render (not in an effect): the guarded comparison converges in one extra
-  // render, then stays stable. Only "todo" consumes it.
-  if (
-    mode === "todo" &&
-    report &&
-    (coverage?.first !== report.meta.coverage.first ||
-      coverage?.last !== report.meta.coverage.last)
-  ) {
-    setCoverage(report.meta.coverage);
-  }
 
   const modeBar = (
     <>

@@ -44,6 +44,7 @@ export default function DashboardView({
         items={items}
         selectedPeriod={selectedPeriod}
         onSelect={setSelectedPeriod}
+        resolution={resolution}
       />
       {!hasData && (
         <p className="font-mono text-sm text-muted">

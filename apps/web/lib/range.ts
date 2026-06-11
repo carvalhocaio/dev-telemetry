@@ -79,7 +79,7 @@ export function resolveRange(
     case "mensal":
       return { resolution: "daily", start: shiftDays(todayISO, -29), end: todayISO };
     case "todo":
-      return { resolution: resolutionForSpan(coverage) };
+      return { resolution: "monthly" };
     case "custom":
       if (!custom) {
         // Defensive: an incomplete custom URL falls back to the default mode.
