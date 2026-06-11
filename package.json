@@ -11,6 +11,7 @@
     "test": "turbo test"
   },
   "devDependencies": {
+    "shadcn": "^4.11.0",
     "turbo": "^2"
   }
 }

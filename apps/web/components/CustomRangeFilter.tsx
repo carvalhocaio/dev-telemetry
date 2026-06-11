@@ -1,114 +1,171 @@
 "use client";
 
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
+import { Calendar } from "@/components/ui/calendar";
 import type { CustomRange } from "@/lib/range";
 import type { Granularity } from "@/types/report";
 
 interface CustomRangeFilterProps {
-  /** Current custom params (when the active mode is "custom"), to prefill. */
   value?: CustomRange;
 }
 
-const RESOLUTIONS: readonly { value: Granularity; label: string }[] = [
-  { value: "daily", label: "Dia" },
-  { value: "weekly", label: "Semana" },
-  { value: "monthly", label: "Mês" },
+const MAX_BARS = 45;
+const MS_PER_DAY = 86_400_000;
+
+const RESOLUTIONS: readonly { value: Granularity; label: string; divisor: number }[] = [
+  { value: "daily",   label: "Dia",    divisor: 1   },
+  { value: "weekly",  label: "Semana", divisor: 7   },
+  { value: "monthly", label: "Mês",    divisor: 30  },
 ];
 
-const FIELD_CLASS =
-  "rounded-md border border-surface bg-background px-2 py-1 font-mono text-xs text-foreground outline-none focus-visible:ring-2 focus-visible:ring-accent";
+function allowedResolutions(start: Date | undefined, end: Date | undefined) {
+  if (!start || !end || start > end) return new Set<Granularity>(["daily", "weekly", "monthly"]);
+  const days = Math.round((end.getTime() - start.getTime()) / MS_PER_DAY);
+  return new Set<Granularity>(
+    RESOLUTIONS.filter((r) => days / r.divisor <= MAX_BARS).map((r) => r.value),
+  );
+}
 
-/**
- * Date filter: a start/end pair plus a resolution select. On apply it navigates
- * to `?mode=custom&res=..&start=..&end=..`. Apply is disabled until both dates
- * are set and start ≤ end, with an inline message explaining why.
- */
+const START_MONTH = new Date(2020, 0);
+const END_MONTH = new Date(new Date().getFullYear() + 1, 11);
+
 export default function CustomRangeFilter({ value }: CustomRangeFilterProps) {
   const router = useRouter();
-  const [start, setStart] = useState(value?.start ?? "");
-  const [end, setEnd] = useState(value?.end ?? "");
+
+  const [startDate, setStartDate] = useState<Date | undefined>(
+    value?.start ? new Date(value.start) : undefined,
+  );
+  const [endDate, setEndDate] = useState<Date | undefined>(
+    value?.end ? new Date(value.end) : undefined,
+  );
+  const [startMonth, setStartMonth] = useState<Date>(startDate ?? new Date());
+  const [endMonth, setEndMonth] = useState<Date>(endDate ?? new Date());
   const [res, setRes] = useState<Granularity>(value?.res ?? "daily");
 
-  const bothSet = start !== "" && end !== "";
-  const ordered = !bothSet || start <= end;
-  const canApply = bothSet && ordered;
+  const ordered = !startDate || !endDate || startDate <= endDate;
+  const canApply = !!startDate && !!endDate && ordered;
 
-  function handleSubmit(event: React.SyntheticEvent<HTMLFormElement>): void {
-    event.preventDefault();
-    if (!canApply) {
-      return;
+  const allowed = allowedResolutions(startDate, endDate);
+
+  // Auto-switch to coarsest allowed resolution when current becomes unavailable
+  useEffect(() => {
+    if (!allowed.has(res)) {
+      const fallback = RESOLUTIONS.slice().reverse().find((r) => allowed.has(r.value));
+      if (fallback) setRes(fallback.value);
     }
-    const params = new URLSearchParams({ mode: "custom", res, start, end });
+  }, [allowed, res]);
+
+  function handleApply(): void {
+    if (!canApply || !startDate || !endDate) return;
+    const params = new URLSearchParams({
+      mode: "custom",
+      res,
+      start: format(startDate, "yyyy-MM-dd"),
+      end: format(endDate, "yyyy-MM-dd"),
+    });
     router.push(`/dashboard?${params.toString()}`);
   }
 
+  const calendarProps = {
+    mode: "single" as const,
+    captionLayout: "dropdown" as const,
+    locale: ptBR,
+    showOutsideDays: false,
+    startMonth: START_MONTH,
+    endMonth: END_MONTH,
+  };
+
   return (
-    <form
-      onSubmit={handleSubmit}
-      aria-label="Filtro de data personalizado"
-      className="flex flex-wrap items-end gap-3 rounded-md border border-surface bg-surface/40 p-3"
+    <div
+      id="custom-range-filter"
+      className="flex flex-col gap-4 rounded-md border border-surface bg-surface/40 p-4"
     >
-      <div className="flex flex-col gap-1">
-        <label htmlFor="range-start" className="font-mono text-[10px] text-muted">
-          Início
-        </label>
-        <input
-          id="range-start"
-          type="date"
-          value={start}
-          max={end || undefined}
-          onChange={(event) => setStart(event.target.value)}
-          className={FIELD_CLASS}
-        />
+      <div className="flex flex-col gap-6 sm:flex-row">
+        {/* Início */}
+        <div className="flex flex-col gap-2">
+          <span className="font-mono text-[10px] uppercase tracking-wider text-muted">
+            Início
+          </span>
+          <Calendar
+            {...calendarProps}
+            selected={startDate}
+            onSelect={setStartDate}
+            month={startMonth}
+            onMonthChange={setStartMonth}
+          />
+          <span className="font-mono text-[10px] text-muted">
+            {startDate ? format(startDate, "dd/MM/yyyy") : "—"}
+          </span>
+        </div>
+
+        <div className="hidden w-px self-stretch bg-surface sm:block" />
+
+        {/* Fim */}
+        <div className="flex flex-col gap-2">
+          <span className="font-mono text-[10px] uppercase tracking-wider text-muted">
+            Fim
+          </span>
+          <Calendar
+            {...calendarProps}
+            selected={endDate}
+            onSelect={setEndDate}
+            month={endMonth}
+            onMonthChange={setEndMonth}
+          />
+          <span className="font-mono text-[10px] text-muted">
+            {endDate ? format(endDate, "dd/MM/yyyy") : "—"}
+          </span>
+        </div>
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="range-end" className="font-mono text-[10px] text-muted">
-          Fim
-        </label>
-        <input
-          id="range-end"
-          type="date"
-          value={end}
-          min={start || undefined}
-          onChange={(event) => setEnd(event.target.value)}
-          className={FIELD_CLASS}
-        />
-      </div>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-surface pt-3">
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-[10px] uppercase tracking-wider text-muted">
+            Resolução
+          </span>
+          <div className="flex gap-1">
+            {RESOLUTIONS.map((option) => {
+              const isAllowed = allowed.has(option.value);
+              const isActive = res === option.value;
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => isAllowed && setRes(option.value)}
+                  disabled={!isAllowed}
+                  title={!isAllowed ? `Mais de ${MAX_BARS} barras para esta resolução` : undefined}
+                  className={`rounded border px-2 py-0.5 font-mono text-[10px] transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${
+                    isActive
+                      ? "border-accent text-accent"
+                      : "border-surface text-muted hover:border-muted hover:text-foreground"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="range-res" className="font-mono text-[10px] text-muted">
-          Resolução
-        </label>
-        <select
-          id="range-res"
-          value={res}
-          onChange={(event) => setRes(event.target.value as Granularity)}
-          className={FIELD_CLASS}
+        <button
+          type="button"
+          onClick={handleApply}
+          disabled={!canApply}
+          className="rounded border border-surface bg-surface/40 px-3 py-1 font-mono text-xs text-foreground transition-colors hover:border-accent disabled:opacity-50"
         >
-          {RESOLUTIONS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
+          Aplicar
+        </button>
+
+        {!ordered && (
+          <p role="alert" className="w-full font-mono text-[10px] text-level-abaixo">
+            A data de início deve ser anterior ou igual à de fim.
+          </p>
+        )}
       </div>
-
-      <button
-        type="submit"
-        disabled={!canApply}
-        className="rounded-md border border-surface bg-surface/40 px-3 py-1 font-mono text-xs text-foreground transition-colors hover:border-accent disabled:opacity-50"
-      >
-        Aplicar
-      </button>
-
-      {!ordered && (
-        <p role="alert" className="w-full font-mono text-[10px] text-level-abaixo">
-          A data de início deve ser anterior ou igual à de fim.
-        </p>
-      )}
-    </form>
+    </div>
   );
 }
