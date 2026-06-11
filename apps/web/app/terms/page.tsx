@@ -19,7 +19,7 @@ export default function TermsPage() {
         <h1 className="font-display text-2xl font-medium tracking-tight">
           <span className="text-accent">#</span> Termos de Uso
         </h1>
-        <p className="font-mono text-xs text-muted">Última atualização: junho de 2025</p>
+        <p className="font-mono text-xs text-muted">Última atualização: junho de 2026</p>
       </div>
 
       <section className="flex flex-col gap-4">
