@@ -13,7 +13,7 @@
 import { commit, pullRequest, repository } from "@dev-telemetry/db/schema";
 import { and, eq, ne, sql, type SQL } from "drizzle-orm";
 
-import type { Granularity, PeriodMetrics, Scope } from "./types.js";
+import type { Granularity, PeriodMetrics, Scope } from "./types";
 
 /** Anything Drizzle-shaped that can run a `.execute()` query. */
 interface Executor {
@@ -38,11 +38,13 @@ function scopePredicate(
   scope: Scope,
   githubLogin: string | undefined,
 ): SQL | undefined {
-  if (scope === "all" || !githubLogin) return undefined;
+  if (scope === "all") return undefined;
   const owner = sql`split_part(${repository.fullName}, '/', 1)`;
-  return scope === "personal"
-    ? eq(owner, githubLogin)
-    : ne(owner, githubLogin);
+  if (scope === "personal") return githubLogin ? eq(owner, githubLogin) : undefined;
+  if (scope === "org") return githubLogin ? ne(owner, githubLogin) : undefined;
+  // org:<login> — specific org, no githubLogin needed
+  const orgLogin = scope.slice(4);
+  return eq(owner, orgLogin);
 }
 
 type CommitAggregate = {
@@ -86,7 +88,11 @@ async function commitAggregates(
   unit: string,
   scopeFilter: SQL | undefined,
 ): Promise<Map<string, CommitAggregate>> {
-  const bucket = sql<string>`date_trunc(${unit}, ${commit.authoredAt})::date`;
+  // Unit must be inlined as a SQL literal — if parameterized ($1 vs $3 in SELECT
+  // and GROUP BY), Postgres treats them as different bindings and rejects the query
+  // with "must appear in GROUP BY". Unit is always from TRUNC_UNIT (day/week/month).
+  const unitLit = sql.raw(`'${unit}'`);
+  const bucket = sql<string>`date_trunc(${unitLit}, ${commit.authoredAt})::date`;
   const join = scopeFilter
     ? sql`join ${repository} on ${eq(commit.repoId, repository.id)}`
     : sql``;
@@ -124,7 +130,8 @@ async function prAggregates(
   unit: string,
   scopeFilter: SQL | undefined,
 ): Promise<Map<string, PrAggregate>> {
-  const bucket = sql<string>`date_trunc(${unit}, ${pullRequest.ghCreatedAt})::date`;
+  const unitLit = sql.raw(`'${unit}'`);
+  const bucket = sql<string>`date_trunc(${unitLit}, ${pullRequest.ghCreatedAt})::date`;
   const join = scopeFilter
     ? sql`join ${repository} on ${eq(pullRequest.repoId, repository.id)}`
     : sql``;
