@@ -28,11 +28,22 @@ declare global {
   var __devTelemetryDb: Database | undefined;
 }
 
-/**
- * Process-wide singleton. Reused across hot reloads in dev to avoid
- * exhausting the connection pool.
- */
-export const db: Database =
-  globalThis.__devTelemetryDb ?? (globalThis.__devTelemetryDb = createDatabase());
+// Lazily initialized singleton — deferred until first use so that importing
+// this module at build time (e.g. during Next.js static analysis) does not
+// throw when DATABASE_URL is absent from the build environment.
+let _instance: Database | undefined;
+
+function getInstance(): Database {
+  if (_instance) return _instance;
+  _instance = globalThis.__devTelemetryDb ?? createDatabase();
+  globalThis.__devTelemetryDb = _instance;
+  return _instance;
+}
+
+export const db: Database = new Proxy({} as Database, {
+  get(_, prop) {
+    return getInstance()[prop as keyof Database];
+  },
+});
 
 export { schema };
