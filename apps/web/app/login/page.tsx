@@ -34,7 +34,7 @@ export default function LoginPage() {
             dev-telemetry
           </h1>
           <p className="font-mono text-sm text-muted">
-            telemetria de dev para devs
+            telemetria para devs
           </p>
         </div>
 
@@ -58,7 +58,7 @@ export default function LoginPage() {
             px-4 py-3
             transition-colors
             hover:border-accent hover:text-accent
-            disabled:opacity-40 disabled:cursor-not-allowed
+            cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed
           "
         >
           <span

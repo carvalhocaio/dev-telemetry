@@ -43,7 +43,7 @@ export default async function LandingPage() {
           <span className="text-accent">$</span> dev-telemetry
         </h1>
         <p className="font-mono text-sm text-muted">
-          telemetria de dev para devs — OSS, multi-tenant, self-hostable
+          telemetria para devs — OSS, multi-tenant, self-hostable
         </p>
       </div>
 

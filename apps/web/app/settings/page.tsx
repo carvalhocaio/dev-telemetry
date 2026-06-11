@@ -1,9 +1,12 @@
 "use client";
 
-import { ArrowLeft, Check, Loader2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
+import CustomSelect from "@/components/CustomSelect";
+import type { SelectOption } from "@/components/CustomSelect";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
+import Link from "next/link";
 import { signOut, useSession } from "@/lib/auth-client";
 
 const QUOTA_BYTES = 3 * 1024 * 1024 * 1024;
@@ -101,6 +104,15 @@ export default function SettingsPage() {
   const [profileSaved, setProfileSaved] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
 
+  // Sync scopes form
+  const [availableOrgs, setAvailableOrgs] = useState<{ login: string }[]>([]);
+  const [selectedScopes, setSelectedScopes] = useState<string[] | null>(null);
+  const [scopesLoaded, setScopesLoaded] = useState(false);
+  const [scopesSaving, setScopesSaving] = useState(false);
+  const [scopesSaved, setScopesSaved] = useState(false);
+  const [scopesError, setScopesError] = useState<string | null>(null);
+  const [fetchingOrgs, setFetchingOrgs] = useState(false);
+
   // Sync state
   const [syncing, setSyncing] = useState(false);
   const [syncJobId, setSyncJobId] = useState<string | null>(null);
@@ -154,6 +166,17 @@ export default function SettingsPage() {
       .then((r) => (r.ok ? (r.json() as Promise<SyncJob | null>) : null))
       .then((job) => { if (job) setSyncJob(job); })
       .catch(() => null);
+
+    fetch("/api/me/sync-scopes", { credentials: "include" })
+      .then((r) => r.ok ? r.json() as Promise<{ selectedScopes: string[] | null; availableOrgs: { login: string }[] }> : null)
+      .then((data) => {
+        if (data) {
+          setAvailableOrgs(data.availableOrgs);
+          setSelectedScopes(data.selectedScopes);
+        }
+        setScopesLoaded(true);
+      })
+      .catch(() => setScopesLoaded(true));
   }, [session]);
 
   // Auto-fill model default when provider changes
@@ -182,6 +205,11 @@ export default function SettingsPage() {
       if (done) {
         setSyncing(false);
         setSyncJobId(null);
+        // Refresh storage counter after sync completes.
+        fetch("/api/me/secrets/status", { credentials: "include" })
+          .then((r) => r.ok ? r.json() as Promise<SecretsStatus> : null)
+          .then((data) => { if (data) setConfig((prev) => prev ? { ...prev, ...data } : prev); })
+          .catch(() => null);
       } else {
         pollRef.current = setTimeout(runBatch, 1200);
       }
@@ -214,6 +242,51 @@ export default function SettingsPage() {
       setTimeout(() => setPatSaved(false), 3000);
     } finally {
       setPatSaving(false);
+    }
+  }
+
+  async function saveScopes(scopes: string[]) {
+    setScopesSaving(true);
+    setScopesError(null);
+    try {
+      const res = await fetch("/api/me/sync-scopes", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scopes }),
+        credentials: "include",
+      });
+      if (!res.ok) {
+        setScopesError("Falha ao salvar — tente novamente.");
+        return;
+      }
+      setSelectedScopes(scopes);
+      setScopesSaved(true);
+      setTimeout(() => setScopesSaved(false), 3000);
+    } finally {
+      setScopesSaving(false);
+    }
+  }
+
+  function toggleScope(token: string) {
+    const current = selectedScopes ?? ["personal", ...availableOrgs.map((o) => o.login)];
+    setSelectedScopes(
+      current.includes(token) ? current.filter((s) => s !== token) : [...current, token],
+    );
+  }
+
+  async function fetchOrgs() {
+    setFetchingOrgs(true);
+    setScopesError(null);
+    try {
+      const r = await fetch("/api/me/sync-scopes", { credentials: "include" });
+      if (!r.ok) throw new Error();
+      const data = await r.json() as { selectedScopes: string[] | null; availableOrgs: { login: string }[] };
+      setAvailableOrgs(data.availableOrgs);
+      setSelectedScopes(data.selectedScopes);
+    } catch {
+      setScopesError("não foi possível buscar as orgs — verifique se o PAT tem escopo read:org");
+    } finally {
+      setFetchingOrgs(false);
     }
   }
 
@@ -325,7 +398,7 @@ export default function SettingsPage() {
         <button
           type="button"
           onClick={() => router.push("/dashboard")}
-          className="flex items-center gap-2 font-mono text-xs text-muted hover:text-accent transition-colors"
+          className="flex cursor-pointer items-center gap-2 font-mono text-xs text-muted hover:text-accent transition-colors"
         >
           <ArrowLeft size={12} aria-hidden="true" />
           <span className="text-accent">~/</span>dev-telemetry
@@ -333,7 +406,7 @@ export default function SettingsPage() {
         <button
           type="button"
           onClick={handleSignOut}
-          className="font-mono text-xs text-muted hover:text-level-abaixo transition-colors"
+          className="cursor-pointer font-mono text-xs text-muted hover:text-level-abaixo transition-colors"
         >
           sair
         </button>
@@ -345,7 +418,11 @@ export default function SettingsPage() {
           <span className="text-accent">$</span> configure dev-telemetry
         </h1>
         <p className="mt-1 font-mono text-xs text-muted">
-          {session.user.name} · {session.user.email}
+          {session.user.name}
+          {session.user.githubLogin && (
+            <> · <span className="text-accent">@{session.user.githubLogin}</span></>
+          )}
+          {" "}· {session.user.email}
         </p>
       </div>
 
@@ -378,7 +455,7 @@ export default function SettingsPage() {
             type="button"
             onClick={savePat}
             disabled={patSaving || !pat.trim()}
-            className="inline-flex items-center gap-1.5 rounded border border-accent bg-accent/10 px-3 py-2 font-mono text-xs text-accent transition-colors hover:bg-accent/20 disabled:opacity-50"
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded border border-accent bg-accent/10 px-3 py-2 font-mono text-xs text-accent transition-colors hover:bg-accent/20 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {patSaving ? <Loader2 size={12} className="animate-spin" /> : patSaved ? <Check size={12} /> : null}
             {patSaved ? "salvo" : "salvar"}
@@ -388,6 +465,61 @@ export default function SettingsPage() {
           <p className="font-mono text-xs text-level-abaixo">{patError}</p>
         )}
       </section>
+
+      {/* Sync scopes section — only shown when PAT is configured and data loaded */}
+      {config?.hasPat && scopesLoaded && (
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-mono text-xs uppercase tracking-wider text-muted">Escopos de Sync</h2>
+            <button
+              type="button"
+              onClick={fetchOrgs}
+              disabled={fetchingOrgs}
+              className="inline-flex cursor-pointer items-center gap-1.5 font-mono text-xs text-muted hover:text-accent transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {fetchingOrgs && <Loader2 size={10} className="animate-spin" />}
+              buscar orgs
+            </button>
+          </div>
+          <p className="font-mono text-xs text-muted/70">
+            Selecione quais escopos serão ingeridos nos próximos syncs.
+            Dados já sincronizados não são removidos.
+          </p>
+          <div className="space-y-1">
+            {(["personal", ...availableOrgs.map((o) => o.login)] as string[]).map((token) => {
+              const active = selectedScopes === null || selectedScopes.includes(token);
+              return (
+                <label
+                  key={token}
+                  className="flex cursor-pointer items-center gap-3 rounded border border-surface bg-surface/40 px-3 py-2 font-mono text-sm transition-colors hover:border-accent"
+                >
+                  <input
+                    type="checkbox"
+                    checked={active}
+                    onChange={() => toggleScope(token)}
+                    className="accent-accent"
+                  />
+                  <span className={active ? "text-foreground" : "text-muted"}>
+                    {token === "personal" ? "pessoal" : token}
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+          <button
+            type="button"
+            onClick={() => saveScopes(selectedScopes ?? ["personal", ...availableOrgs.map((o) => o.login)])}
+            disabled={scopesSaving}
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded border border-accent bg-accent/10 px-3 py-2 font-mono text-xs text-accent transition-colors hover:bg-accent/20 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {scopesSaving ? <Loader2 size={12} className="animate-spin" /> : scopesSaved ? <Check size={12} /> : null}
+            {scopesSaved ? "salvo" : "salvar escopos"}
+          </button>
+          {scopesError && (
+            <p className="font-mono text-xs text-level-abaixo">{scopesError}</p>
+          )}
+        </section>
+      )}
 
       {/* LLM section */}
       <section className="space-y-3">
@@ -400,15 +532,11 @@ export default function SettingsPage() {
           )}
         </div>
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
-          <select
+          <CustomSelect
             value={provider}
-            onChange={(e) => setProvider(e.target.value as LlmProvider)}
-            className="rounded border border-surface bg-surface/40 px-3 py-2 font-mono text-sm text-foreground outline-none focus-visible:border-accent"
-          >
-            {LLM_PROVIDERS.map((p) => (
-              <option key={p} value={p}>{p}</option>
-            ))}
-          </select>
+            onChange={(v) => setProvider(v as LlmProvider)}
+            options={LLM_PROVIDERS.map((p) => ({ value: p, label: p }))}
+          />
           <input
             type="text"
             value={model}
@@ -428,7 +556,7 @@ export default function SettingsPage() {
           type="button"
           onClick={saveLlm}
           disabled={llmSaving || !apiKey.trim()}
-          className="inline-flex items-center gap-1.5 rounded border border-accent bg-accent/10 px-3 py-2 font-mono text-xs text-accent transition-colors hover:bg-accent/20 disabled:opacity-50"
+          className="inline-flex cursor-pointer items-center gap-1.5 rounded border border-accent bg-accent/10 px-3 py-2 font-mono text-xs text-accent transition-colors hover:bg-accent/20 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {llmSaving ? <Loader2 size={12} className="animate-spin" /> : llmSaved ? <Check size={12} /> : null}
           {llmSaved ? "salvo" : "salvar configuração LLM"}
@@ -446,20 +574,15 @@ export default function SettingsPage() {
             <span className="font-mono text-[10px] text-muted">{activeProfileLabel}</span>
           )}
         </div>
-        <select
+        <CustomSelect
           value={selectedKey}
-          onChange={(e) => setSelectedKey(e.target.value)}
-          className="w-full rounded border border-surface bg-surface/40 px-3 py-2 font-mono text-sm text-foreground outline-none focus-visible:border-accent"
-        >
-          {PROFILE_GROUPS.map((group) => (
-            <optgroup key={group} label={group}>
-              {PROFILE_METADATA.filter((p) => p.group === group).map((p) => (
-                <option key={p.key} value={p.key}>{p.label}</option>
-              ))}
-            </optgroup>
-          ))}
-          <option value="custom">Perfil personalizado</option>
-        </select>
+          onChange={setSelectedKey}
+          className="w-full"
+          options={[
+            ...PROFILE_METADATA.map((p) => ({ value: p.key, label: p.label, group: p.group })),
+            { value: "custom", label: "Perfil personalizado" },
+          ]}
+        />
 
         {selectedKey === "custom" && (
           <div className="space-y-1">
@@ -481,7 +604,7 @@ export default function SettingsPage() {
           type="button"
           onClick={saveProfile}
           disabled={profileSaving || (selectedKey === "custom" && !customProfileContent.trim())}
-          className="inline-flex items-center gap-1.5 rounded border border-accent bg-accent/10 px-3 py-2 font-mono text-xs text-accent transition-colors hover:bg-accent/20 disabled:opacity-50"
+          className="inline-flex cursor-pointer items-center gap-1.5 rounded border border-accent bg-accent/10 px-3 py-2 font-mono text-xs text-accent transition-colors hover:bg-accent/20 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {profileSaving ? <Loader2 size={12} className="animate-spin" /> : profileSaved ? <Check size={12} /> : null}
           {profileSaved ? "salvo" : "salvar perfil"}
@@ -495,10 +618,20 @@ export default function SettingsPage() {
       <section className="space-y-2">
         <h2 className="font-mono text-xs uppercase tracking-wider text-muted">Armazenamento</h2>
         <div className="rounded border border-surface bg-surface/40 p-4 font-mono text-xs space-y-1">
-          <p className="text-muted">
-            [{terminalBar(bytesUsed, QUOTA_BYTES)}]{" "}
-            <span className="text-foreground">{usedPct}%</span>
-          </p>
+          <div className="flex w-full items-center gap-1 text-muted">
+            <span>[</span>
+            <div className="relative flex-1 overflow-hidden leading-none">
+              <span className="block text-muted/30">{"░".repeat(80)}</span>
+              <div
+                className="absolute inset-0 overflow-hidden text-accent"
+                style={{ width: `${usedPct}%` }}
+              >
+                {"█".repeat(80)}
+              </div>
+            </div>
+            <span>]</span>
+            <span className="ml-1 text-foreground">{usedPct}%</span>
+          </div>
           <p className="text-muted">
             {formatBytes(bytesUsed)}{" "}
             <span className="text-muted/50">/ {formatBytes(QUOTA_BYTES)}</span>
@@ -514,14 +647,26 @@ export default function SettingsPage() {
           <div className="rounded border border-surface bg-surface/40 p-4 font-mono text-xs space-y-1">
             {syncJob.status === "running" || syncing ? (
               <>
-                <p className="text-muted">
-                  [{terminalBar(syncJob.reposDone, syncJob.reposTotal)}]{" "}
-                  <span className="text-foreground">
+                <div className="flex w-full items-center gap-1 text-muted">
+                  <span>[</span>
+                  <div className="relative flex-1 overflow-hidden leading-none">
+                    <span className="block text-muted/30">{"░".repeat(80)}</span>
+                    <div
+                      className="absolute inset-0 overflow-hidden text-accent"
+                      style={{
+                        width: `${syncJob.reposTotal > 0 ? Math.min((syncJob.reposDone / syncJob.reposTotal) * 100, 100).toFixed(1) : 0}%`,
+                      }}
+                    >
+                      {"█".repeat(80)}
+                    </div>
+                  </div>
+                  <span>]</span>
+                  <span className="ml-1 text-foreground">
                     {syncJob.reposTotal > 0
                       ? `${syncJob.reposDone}/${syncJob.reposTotal} repos`
                       : syncJob.phase ?? "iniciando…"}
                   </span>
-                </p>
+                </div>
                 <p className="text-muted">
                   {syncJob.commits.toLocaleString("pt-BR")} commits ·{" "}
                   {syncJob.prs.toLocaleString("pt-BR")} PRs
@@ -530,11 +675,19 @@ export default function SettingsPage() {
             ) : (
               <p className={syncJob.status === "error" ? "text-level-abaixo" : "text-muted"}>
                 {syncJob.status === "done" && (
-                  <>
-                    <span className="text-level-acima">✓</span>{" "}
-                    carga concluída · {syncJob.commits.toLocaleString("pt-BR")} commits ·{" "}
-                    {syncJob.prs.toLocaleString("pt-BR")} PRs
-                  </>
+                  <span className="flex items-center justify-between gap-4">
+                    <span>
+                      <span className="text-level-acima">✓</span>{" "}
+                      carga concluída · {syncJob.commits.toLocaleString("pt-BR")} commits ·{" "}
+                      {syncJob.prs.toLocaleString("pt-BR")} PRs
+                    </span>
+                    <Link
+                      href="/dashboard"
+                      className="inline-flex items-center gap-1 text-accent hover:underline transition-colors"
+                    >
+                      ir para o dashboard <ArrowRight size={10} />
+                    </Link>
+                  </span>
                 )}
                 {syncJob.status === "limit_reached" && "⚠ quota atingida — considere limpar dados antigos"}
                 {syncJob.status === "error" && `✗ erro: ${syncJob.error ?? "desconhecido"}`}
@@ -548,7 +701,7 @@ export default function SettingsPage() {
             type="button"
             onClick={() => startSync("incremental")}
             disabled={syncing || !config?.hasPat}
-            className="inline-flex items-center gap-2 rounded border border-surface bg-surface/40 px-3 py-2 font-mono text-xs text-foreground transition-colors hover:border-accent disabled:opacity-50"
+            className="inline-flex cursor-pointer items-center gap-2 rounded border border-surface bg-surface/40 px-3 py-2 font-mono text-xs text-foreground transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-50"
           >
             {syncing ? <Loader2 size={12} className="animate-spin" /> : null}
             sync incremental
@@ -557,7 +710,7 @@ export default function SettingsPage() {
             type="button"
             onClick={() => startSync("full")}
             disabled={syncing || !config?.hasPat}
-            className="inline-flex items-center gap-2 rounded border border-accent/40 bg-accent/5 px-3 py-2 font-mono text-xs text-accent/80 transition-colors hover:border-accent hover:text-accent disabled:opacity-50"
+            className="inline-flex cursor-pointer items-center gap-2 rounded border border-accent/40 bg-accent/5 px-3 py-2 font-mono text-xs text-accent/80 transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-50"
           >
             {syncing ? <Loader2 size={12} className="animate-spin" /> : null}
             carga completa (all-time)

@@ -14,6 +14,7 @@ import { PROFILE_REGISTRY } from "@/lib/profiles";
 
 const GRANULARITIES = ["daily", "weekly", "monthly"] as const;
 const SCOPES = ["all", "org", "personal"] as const;
+// org:* scopes are dynamic — accept any string and validate with isScope in handler.
 
 function bucketEnd(granularity: Granularity, start: string): Date {
   const d = new Date(start);
@@ -61,17 +62,21 @@ export const reportsRoutes = new Elysia()
         githubLogin = u?.githubLogin ?? undefined;
       }
 
-      const report = await buildReport({
-        db,
-        userId: s.user.id,
-        granularity,
-        start: query.start ?? undefined,
-        end: query.end ?? undefined,
-        scope,
-        githubLogin,
-      });
-
-      return report;
+      try {
+        const report = await buildReport({
+          db,
+          userId: s.user.id,
+          granularity,
+          start: query.start ?? undefined,
+          end: query.end ?? undefined,
+          scope,
+          githubLogin,
+        });
+        return report;
+      } catch (err) {
+        console.error("[reports] buildReport error:", err);
+        return status(500, { error: err instanceof Error ? err.message : String(err) });
+      }
     },
     {
       params: t.Object({
@@ -80,7 +85,7 @@ export const reportsRoutes = new Elysia()
       query: t.Object({
         start: t.Optional(t.String()),
         end: t.Optional(t.String()),
-        scope: t.Optional(t.Union(SCOPES.map((s) => t.Literal(s)))),
+        scope: t.Optional(t.String()),
       }),
     },
   )
@@ -208,7 +213,7 @@ export const reportsRoutes = new Elysia()
         granularity: t.Union(GRANULARITIES.map((g) => t.Literal(g))),
         period: t.String({ pattern: "^\\d{4}-\\d{2}-\\d{2}$" }),
         level: t.Optional(t.String()),
-        scope: t.Optional(t.Union(SCOPES.map((s) => t.Literal(s)))),
+        scope: t.Optional(t.String()),
       }),
     },
   );
