@@ -15,6 +15,13 @@
       "when": 1781099230190,
       "tag": "0001_demonic_malice",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1781180827852,
+      "tag": "0002_lethal_multiple_man",
+      "breakpoints": true
     }
   ]
 }

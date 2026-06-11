@@ -5,9 +5,10 @@ import {
   pullRequest,
   repository,
   syncJob,
+  userSecret,
   userUsage,
 } from "@dev-telemetry/db/schema";
-import type { Octokit } from "./client.js";
+import type { Octokit } from "./client";
 import {
   QUOTA_BYTES,
   capCommitMessage,
@@ -15,7 +16,7 @@ import {
   estimateCommitBytes,
   estimatePrBytes,
   isWithinQuota,
-} from "./cap.js";
+} from "./cap";
 
 // ---------------------------------------------------------------------------
 // Cursor
@@ -124,10 +125,24 @@ async function addUsage(db: Database, userId: string, deltaBytes: number) {
 // Phase 1: discover repos
 // ---------------------------------------------------------------------------
 
+/**
+ * Returns the list of GitHub organizations the authenticated user belongs to.
+ * Requires the `read:org` PAT scope.
+ */
+export async function fetchUserOrgs(
+  octokit: Octokit,
+): Promise<{ login: string }[]> {
+  return octokit.paginate(octokit.rest.orgs.listForAuthenticatedUser, {
+    per_page: 100,
+  });
+}
+
 async function discoverRepos(
   db: Database,
   octokit: Octokit,
   userId: string,
+  userLogin: string,
+  syncScopes: string[] | null,
 ): Promise<string[]> {
   const rawRepos = await octokit.paginate(
     octokit.rest.repos.listForAuthenticatedUser,
@@ -138,10 +153,21 @@ async function discoverRepos(
     },
   );
 
-  if (rawRepos.length === 0) return [];
+  // Filter to selected scopes when configured.
+  const filtered =
+    syncScopes && syncScopes.length > 0
+      ? rawRepos.filter((r: { full_name: string }) => {
+          const owner = r.full_name.split("/")[0] ?? "";
+          return syncScopes.some((s) =>
+            s === "personal" ? owner === userLogin : s === owner,
+          );
+        })
+      : rawRepos;
 
-  // Upsert all repos and return their DB IDs.
-  const rows = rawRepos.map((r) => ({
+  if (filtered.length === 0) return [];
+
+  // Upsert filtered repos and return their DB IDs.
+  const rows = filtered.map((r: { id: number; name: string; full_name: string }) => ({
     userId,
     githubId: r.id,
     name: r.name,
@@ -339,6 +365,15 @@ export async function runBackfillBatch(
   }
 
   const userId = job.userId;
+
+  // Read sync scope preference for this user (null = sync everything).
+  const [secretRow] = await db
+    .select({ syncScopes: userSecret.syncScopes })
+    .from(userSecret)
+    .where(eq(userSecret.userId, userId))
+    .limit(1);
+  const syncScopes = secretRow?.syncScopes ?? null;
+
   let cursor: SyncCursor = (job.cursor as SyncCursor | null) ?? {
     phase: "repos",
     repoIds: [],
@@ -350,7 +385,7 @@ export async function runBackfillBatch(
   try {
     // --- Phase 1: repos ---
     if (cursor.phase === "repos") {
-      const repoIds = await discoverRepos(db, octokit, userId);
+      const repoIds = await discoverRepos(db, octokit, userId, userLogin, syncScopes);
       cursor = { ...cursor, phase: "commits", repoIds, repoIndex: 0, page: 1 };
       await markJobRunning(db, jobId, "commits", cursor, { reposTotal: repoIds.length });
       // Fall through to start commits in the same batch.

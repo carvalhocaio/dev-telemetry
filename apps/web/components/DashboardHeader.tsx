@@ -2,7 +2,7 @@
 
 import { Lock, Settings, SlidersHorizontal } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import AiPoweredBadge from "@/components/AiPoweredBadge";
 import CustomRangeFilter from "@/components/CustomRangeFilter";
@@ -31,6 +31,14 @@ export default function DashboardHeader() {
   const scope: Scope = isScope(rawScope) ? rawScope : "all";
   const custom = readCustom(searchParams);
   const [filterOpen, setFilterOpen] = useState(mode === "custom");
+  const [orgs, setOrgs] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetch("/api/me/orgs", { credentials: "include" })
+      .then((r) => r.ok ? r.json() as Promise<{ orgs: string[] }> : null)
+      .then((data) => { if (data) setOrgs(data.orgs); })
+      .catch(() => null);
+  }, []);
 
   async function handleSignOut() {
     await signOut();
@@ -46,7 +54,7 @@ export default function DashboardHeader() {
         <div className="flex flex-wrap items-center gap-4">
           <AiPoweredBadge />
           <ModeSelector current={mode} />
-          <ScopeSelector currentScope={scope} currentMode={mode} />
+          <ScopeSelector currentScope={scope} currentMode={mode} orgs={orgs} />
           <button
             type="button"
             onClick={() => setFilterOpen((open) => !open)}

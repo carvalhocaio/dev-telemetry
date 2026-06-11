@@ -5,8 +5,8 @@ import {
   percentileRank,
   toLevel,
   WEIGHTS,
-} from "./classifier.js";
-import type { PeriodMetrics } from "./types.js";
+} from "./classifier";
+import type { PeriodMetrics } from "./types";
 
 function metrics(overrides: Partial<PeriodMetrics> & { period: string }): PeriodMetrics {
   return {

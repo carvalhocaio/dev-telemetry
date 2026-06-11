@@ -1,33 +1,34 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
+import CustomSelect from "@/components/CustomSelect";
 import type { Scope } from "@/types/report";
 
 interface ScopeSelectorProps {
   currentScope: Scope;
   currentMode: string;
+  orgs?: string[];
 }
 
-/** Repository scopes shown as a segmented toggle. */
-const SCOPES: readonly { scope: Scope; label: string }[] = [
-  { scope: "all", label: "Tudo" },
-  { scope: "org", label: "Org" },
-  { scope: "personal", label: "Pessoal" },
-];
+export default function ScopeSelector({ currentScope, currentMode, orgs = [] }: ScopeSelectorProps) {
+  const router = useRouter();
 
-/**
- * Switches the repository scope via the `?scope=` query param, preserving the
- * current `?mode=` so the time window isn't reset.
- */
-export default function ScopeSelector({ currentScope, currentMode }: ScopeSelectorProps) {
+  const activeOrg = currentScope.startsWith("org:") ? currentScope.slice(4) : "";
+
+  const fixedTabs: { scope: Scope; label: string }[] = [
+    { scope: "all", label: "tudo" },
+    { scope: "personal", label: "pessoal" },
+  ];
+
   return (
     <div
       role="group"
       aria-label="Escopo de repositórios"
-      className="inline-flex rounded-md border border-surface bg-surface/40 p-0.5 font-mono text-xs"
+      className="inline-flex items-center rounded-md border border-surface bg-surface/40 p-0.5 font-mono text-xs"
     >
-      {SCOPES.map(({ scope, label }) => {
+      {fixedTabs.map(({ scope, label }) => {
         const active = scope === currentScope;
         return (
           <Link
@@ -35,15 +36,25 @@ export default function ScopeSelector({ currentScope, currentMode }: ScopeSelect
             href={`/?scope=${scope}&mode=${currentMode}`}
             aria-current={active ? "page" : undefined}
             className={`rounded px-3 py-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
-              active
-                ? "bg-accent text-background"
-                : "text-muted hover:text-foreground"
+              active ? "bg-accent text-background" : "text-muted hover:text-foreground"
             }`}
           >
             {label}
           </Link>
         );
       })}
+
+      {orgs.length > 0 && (
+        <CustomSelect
+          inline
+          value={activeOrg}
+          onChange={(org) => router.push(`/?scope=org:${org}&mode=${currentMode}`)}
+          options={[
+            { value: "", label: "org" },
+            ...orgs.map((o) => ({ value: o, label: o })),
+          ]}
+        />
+      )}
     </div>
   );
 }

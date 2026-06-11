@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { classify } from "./classifier.js";
-import { summarizeWindow } from "./reporting.js";
-import type { PeriodMetrics } from "./types.js";
+import { classify } from "./classifier";
+import { summarizeWindow } from "./reporting";
+import type { PeriodMetrics } from "./types";
 
 function metrics(overrides: Partial<PeriodMetrics> & { period: string }): PeriodMetrics {
   return {

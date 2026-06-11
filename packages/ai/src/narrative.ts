@@ -1,7 +1,7 @@
 import { generateObject } from "ai";
-import { NarrativeSchema } from "./schema.js";
-import { resolveModel, type LlmProvider } from "./providers.js";
-import type { Narrative } from "./schema.js";
+import { NarrativeSchema } from "./schema";
+import { resolveModel, type LlmProvider } from "./providers";
+import type { Narrative } from "./schema";
 
 export interface CommitSummary {
   message: string;

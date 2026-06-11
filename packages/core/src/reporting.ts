@@ -11,14 +11,14 @@
  *   5. emit periods newest-first.
  */
 
-import { bucketStart, toLocalISODate } from "./bucket.js";
+import { bucketStart, toLocalISODate } from "./bucket";
 import {
   classify,
   LEVEL_CUTS_BY_LEVEL,
   toLevel,
   WEIGHTS,
-} from "./classifier.js";
-import { computeMetrics } from "./metrics.js";
+} from "./classifier";
+import { computeMetrics } from "./metrics";
 import {
   type Coverage,
   type Granularity,
@@ -29,7 +29,7 @@ import {
   type Scope,
   mergeRate,
   type WindowSummary,
-} from "./types.js";
+} from "./types";
 
 export const SMALL_SAMPLE_THRESHOLD = 8;
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createCrypto } from "./index.js";
+import { createCrypto } from "./index";
 
 // 32-byte test key (never use in production).
 const TEST_KEY = "0".repeat(64);

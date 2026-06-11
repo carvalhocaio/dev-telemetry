@@ -13,7 +13,7 @@ import {
   type PeriodClassification,
   type PeriodMetrics,
   throughput,
-} from "./types.js";
+} from "./types";
 
 export const WEIGHTS: Record<keyof Components, number> = {
   throughput: 0.45,

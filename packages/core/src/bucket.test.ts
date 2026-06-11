@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { bucketStart, bucketStartDate, parseLocalISODate } from "./bucket.js";
+import { bucketStart, bucketStartDate, parseLocalISODate } from "./bucket";
 
 describe("bucketStart daily", () => {
   it("returns the same day", () => {

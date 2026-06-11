@@ -22,10 +22,11 @@ export type Resolution = Granularity;
 export type Mode = "semanal" | "mensal" | "todo" | "custom";
 
 /** Repository scope filter applied to the report query. */
-export type Scope = "all" | "org" | "personal";
+export type Scope = "all" | "org" | "personal" | `org:${string}`;
 
 export function isScope(s: string | null): s is Scope {
-  return s === "all" || s === "org" || s === "personal";
+  if (!s) return false;
+  return s === "all" || s === "org" || s === "personal" || s.startsWith("org:");
 }
 
 export const GRANULARITIES: readonly Granularity[] = [

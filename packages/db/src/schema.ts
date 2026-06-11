@@ -129,6 +129,9 @@ export const userSecret = pgTable("user_secret", {
   // AES-256-GCM ciphertext only — never the plaintext API key.
   llmApiKeyEnc: text("llmApiKeyEnc"),
   llmModel: text("llmModel"),
+  // Null = no preference (sync all). Otherwise an array of scope tokens:
+  // "personal" for personal repos, or a GitHub org login for that org.
+  syncScopes: text("syncScopes").array(),
   createdAt: timestamp("createdAt", { withTimezone: true })
     .notNull()
     .defaultNow(),

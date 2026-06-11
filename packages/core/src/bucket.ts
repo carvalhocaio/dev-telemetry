@@ -10,7 +10,7 @@
  * sees, not UTC — same convention as `apps/web/lib/calendar.ts`.
  */
 
-import type { Granularity } from "./types.js";
+import type { Granularity } from "./types";
 
 /** Parses "YYYY-MM-DD" into a local-midnight Date. */
 export function parseLocalISODate(value: string): Date {
