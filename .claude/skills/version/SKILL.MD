@@ -71,27 +71,7 @@ Then edit each file's `"version": "<old>"` line to `"version": "<new>"`. Because
 `tests/package.json` may have a different old value, edit it with its own
 specific old string.
 
-### 5. Update the runtime version constant
-
-Update `apps/web/lib/version.ts`. Read its current value:
-
-```bash
-grep 'APP_VERSION' apps/web/lib/version.ts
-```
-
-Change the line:
-
-```ts
-export const APP_VERSION = "<old>";
-```
-
-to:
-
-```ts
-export const APP_VERSION = "<new>";
-```
-
-### 6. Confirm the changes
+### 5. Confirm the changes
 
 Verify every file now reports the new version:
 
@@ -119,5 +99,5 @@ Then instruct the user (do NOT do these yourself):
 ## Rules
 
 - NEVER run `git commit` or `git tag` — only update files and guide the user.
-- NEVER change anything other than the `"version"` field and `APP_VERSION`.
+- NEVER change anything other than the `"version"` field in `package.json` files.
 - If any target file is missing, report which one and stop.
