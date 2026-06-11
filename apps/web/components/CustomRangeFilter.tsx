@@ -3,7 +3,7 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Calendar } from "@/components/ui/calendar";
 import type { CustomRange } from "@/lib/range";
@@ -51,13 +51,22 @@ export default function CustomRangeFilter({ value }: CustomRangeFilterProps) {
 
   const allowed = allowedResolutions(startDate, endDate);
 
-  // Auto-switch to coarsest allowed resolution when current becomes unavailable
-  useEffect(() => {
-    if (!allowed.has(res)) {
-      const fallback = RESOLUTIONS.slice().reverse().find((r) => allowed.has(r.value));
+  function autoSwitchRes(newAllowed: Set<Granularity>, currentRes: Granularity) {
+    if (!newAllowed.has(currentRes)) {
+      const fallback = RESOLUTIONS.slice().reverse().find((r) => newAllowed.has(r.value));
       if (fallback) setRes(fallback.value);
     }
-  }, [allowed, res]);
+  }
+
+  function handleStartSelect(date: Date | undefined) {
+    setStartDate(date);
+    autoSwitchRes(allowedResolutions(date, endDate), res);
+  }
+
+  function handleEndSelect(date: Date | undefined) {
+    setEndDate(date);
+    autoSwitchRes(allowedResolutions(startDate, date), res);
+  }
 
   function handleApply(): void {
     if (!canApply || !startDate || !endDate) return;
@@ -93,7 +102,7 @@ export default function CustomRangeFilter({ value }: CustomRangeFilterProps) {
           <Calendar
             {...calendarProps}
             selected={startDate}
-            onSelect={setStartDate}
+            onSelect={handleStartSelect}
             month={startMonth}
             onMonthChange={setStartMonth}
           />
@@ -112,7 +121,7 @@ export default function CustomRangeFilter({ value }: CustomRangeFilterProps) {
           <Calendar
             {...calendarProps}
             selected={endDate}
-            onSelect={setEndDate}
+            onSelect={handleEndSelect}
             month={endMonth}
             onMonthChange={setEndMonth}
           />

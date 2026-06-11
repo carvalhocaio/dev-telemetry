@@ -179,10 +179,6 @@ export default function SettingsPage() {
       .catch(() => setScopesLoaded(true));
   }, [session]);
 
-  // Auto-fill model default when provider changes
-  useEffect(() => {
-    setModel(DEFAULT_MODELS[provider]);
-  }, [provider]);
 
   // Poll sync progress while running
   useEffect(() => {
@@ -534,7 +530,7 @@ export default function SettingsPage() {
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <CustomSelect
             value={provider}
-            onChange={(v) => setProvider(v as LlmProvider)}
+            onChange={(v) => { const p = v as LlmProvider; setProvider(p); setModel(DEFAULT_MODELS[p]); }}
             options={LLM_PROVIDERS.map((p) => ({ value: p, label: p }))}
           />
           <input
