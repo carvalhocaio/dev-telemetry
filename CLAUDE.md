@@ -43,6 +43,7 @@ Skills are invoked with `/skill-name` in the Claude Code prompt. Some skills acc
 | `pr-description`   | `/pr-description`   | Generates a complete PR description                     |
 | `changelog`        | `/changelog`        | Generates or updates CHANGELOG.md                       |
 | `docs`             | `/docs`             | Generates or updates README and other .md docs          |
+| `version`          | `/version`          | Bumps version across all package.json files             |
 
 ## Convention skills (auto-loaded)
 
@@ -65,4 +66,4 @@ tech-lead
   └─ pr-description    (when opening PR)
 ```
 
-For releases: `changelog` → `docs` (if needed) → `commit`.
+For releases: `/version` → `/changelog` → `/docs` (if needed) → `/commit` → `git tag v<version>`.

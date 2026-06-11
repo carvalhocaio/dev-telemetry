@@ -37,10 +37,12 @@ describe("resolveRange", () => {
     });
   });
 
-  it("todo has no window and adapts the resolution to the coverage span", () => {
+  it("todo always returns monthly resolution regardless of coverage span", () => {
+    expect(resolveRange("todo")).toEqual({ resolution: "monthly" });
+
     const shortHistory: Coverage = { first: "2026-04-01", last: "2026-06-09" };
     expect(resolveRange("todo", undefined, TODAY, shortHistory)).toEqual({
-      resolution: "weekly",
+      resolution: "monthly",
     });
 
     const longHistory: Coverage = { first: "2024-01-01", last: "2026-06-09" };

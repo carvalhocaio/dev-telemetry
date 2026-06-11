@@ -8,6 +8,7 @@ import AiPoweredBadge from "@/components/AiPoweredBadge";
 import ScopeSelector from "@/components/ScopeSelector";
 import { signOut } from "@/lib/auth-client";
 import { resolveMode } from "@/lib/range";
+import { APP_VERSION, REPO_URL } from "@/lib/version";
 import { isScope, type Scope } from "@/types/report";
 
 export default function DashboardHeader() {
@@ -33,9 +34,20 @@ export default function DashboardHeader() {
   return (
     <header className="flex flex-col gap-3 border-b border-surface pb-4">
       <div className="flex items-start justify-between gap-4">
-        <h1 className="whitespace-nowrap font-display text-lg font-medium tracking-tight">
-          <span className="text-accent">$</span> dev-telemetry
-        </h1>
+        <div className="flex flex-col gap-0.5">
+          <h1 className="whitespace-nowrap font-display text-lg font-medium tracking-tight">
+            <span className="text-accent">$</span> dev-telemetry
+          </h1>
+          <a
+            href={REPO_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="GitHub"
+            className="font-mono text-[10px] text-muted transition-colors hover:text-accent"
+          >
+            {APP_VERSION}
+          </a>
+        </div>
 
         <div className="flex items-center gap-3">
           <AiPoweredBadge />
