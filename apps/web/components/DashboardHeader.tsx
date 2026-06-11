@@ -33,36 +33,31 @@ export default function DashboardHeader() {
   return (
     <header className="flex flex-col gap-3 border-b border-surface pb-4">
       <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <h1 className="whitespace-nowrap font-display text-lg font-medium tracking-tight">
-            <span className="text-accent">$</span> dev-telemetry
-          </h1>
-          <AiPoweredBadge />
-        </div>
+        <h1 className="whitespace-nowrap font-display text-lg font-medium tracking-tight">
+          <span className="text-accent">$</span> dev-telemetry
+        </h1>
 
-        <div className="flex flex-col items-end gap-2">
-          {/* scope selector + sync + settings + sign-out */}
-          <div className="flex items-center gap-2">
-            <ScopeSelector currentScope={scope} currentMode={mode} orgs={orgs} />
-            <button
-              type="button"
-              onClick={() => router.push("/settings")}
-              aria-label="Configurações"
-              title="Configurações"
-              className="inline-flex items-center justify-center rounded-md border border-surface bg-surface/40 p-1.5 text-muted transition-colors hover:border-accent hover:text-foreground"
-            >
-              <Settings size={14} aria-hidden="true" />
-            </button>
-            <button
-              type="button"
-              onClick={handleSignOut}
-              aria-label="Sair"
-              title="Sair"
-              className="inline-flex items-center justify-center rounded-md border border-surface bg-surface/40 p-1.5 text-muted transition-colors hover:border-accent hover:text-foreground"
-            >
-              <Lock size={14} aria-hidden="true" />
-            </button>
-          </div>
+        <div className="flex items-center gap-3">
+          <AiPoweredBadge />
+          <ScopeSelector currentScope={scope} currentMode={mode} orgs={orgs} />
+          <button
+            type="button"
+            onClick={() => router.push("/settings")}
+            aria-label="Configurações"
+            title="Configurações"
+            className="inline-flex items-center justify-center rounded-md border border-surface bg-surface/40 p-1.5 text-muted transition-colors hover:border-accent hover:text-foreground"
+          >
+            <Settings size={14} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            aria-label="Sair"
+            title="Sair"
+            className="inline-flex items-center justify-center rounded-md border border-surface bg-surface/40 p-1.5 text-muted transition-colors hover:border-accent hover:text-foreground"
+          >
+            <Lock size={14} aria-hidden="true" />
+          </button>
         </div>
       </div>
 
