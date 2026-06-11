@@ -1,5 +1,5 @@
-export { createOctokit } from "./client";
-export type { Octokit } from "./client";
+export { createOctokit } from "./client.js";
+export type { Octokit } from "./client.js";
 
 export {
   capBytes,
@@ -9,11 +9,11 @@ export {
   estimatePrBytes,
   isWithinQuota,
   QUOTA_BYTES,
-} from "./cap";
+} from "./cap.js";
 
 export {
   startSyncJob,
   runBackfillBatch,
   fetchUserOrgs,
-} from "./backfill";
-export type { SyncMode, SyncPhase, SyncCursor } from "./backfill";
+} from "./backfill.js";
+export type { SyncMode, SyncPhase, SyncCursor } from "./backfill.js";

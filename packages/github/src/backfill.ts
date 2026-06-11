@@ -8,7 +8,7 @@ import {
   userSecret,
   userUsage,
 } from "@dev-telemetry/db/schema";
-import type { Octokit } from "./client";
+import type { Octokit } from "./client.js";
 import {
   QUOTA_BYTES,
   capCommitMessage,
@@ -16,7 +16,7 @@ import {
   estimateCommitBytes,
   estimatePrBytes,
   isWithinQuota,
-} from "./cap";
+} from "./cap.js";
 
 // ---------------------------------------------------------------------------
 // Cursor
