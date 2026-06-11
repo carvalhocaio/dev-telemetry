@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { NarrativeSchema } from "./schema.js";
-import { DEFAULT_MODELS, resolveModel } from "./providers.js";
+import { NarrativeSchema } from "./schema";
+import { DEFAULT_MODELS, resolveModel } from "./providers";
 
 // Top-level mock — vi.mock is hoisted, so the factory must not reference
 // local variables. We configure the return value per-test via mockResolvedValue.

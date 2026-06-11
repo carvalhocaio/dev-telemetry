@@ -7,7 +7,7 @@ import {
   estimatePrBytes,
   isWithinQuota,
   QUOTA_BYTES,
-} from "./cap.js";
+} from "./cap";
 
 describe("capBytes", () => {
   it("returns the string unchanged when under the limit", () => {
