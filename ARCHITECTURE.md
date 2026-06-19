@@ -124,7 +124,7 @@ All application data lives in PostgreSQL and is accessed through Drizzle.
 Security is enforced at every layer, not bolted on.
 
 **Secret encryption flow** — When a user submits a GitHub PAT or LLM API key,
-the value is encrypted with AES-256-GCM (using `ENCRYPTION_KEY`) before being
+the value is encrypted with AES-256-GCM (using `SECRET_ENCRYPTION_KEY`) before being
 written to `user_secret`. The API never returns stored secrets as plaintext;
 read endpoints expose only presence flags or masked indicators. Decryption
 happens server-side, in memory, only when a secret is needed to call an external
