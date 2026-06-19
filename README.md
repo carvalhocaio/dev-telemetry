@@ -53,7 +53,7 @@ data-driven view of their own work.
    ```
 2. Copy the example environment file and fill in the values:
    ```bash
-   cp .env.example .env
+   cp apps/web/.env.example apps/web/.env.local
    ```
 3. Install dependencies:
    ```bash

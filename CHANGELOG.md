@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-06-19
+
+### Fixed
+- Auth header parser no longer triggers SAST false positive — Bearer token extraction rewritten to use `String.match` instead of `RegExp.exec`. (#891087c)
+
 ## [1.0.1] - 2026-06-11
 
 ### Fixed

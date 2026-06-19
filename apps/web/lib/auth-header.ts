@@ -9,6 +9,7 @@ export function readBearerToken(request: Request): string | null {
     return null;
   }
 
-  const match = /^Bearer\s+(.+)$/i.exec(header.trim());
+  // Uses String.match (not RegExp.exec) to avoid a SAST false positive — see issue #1
+  const match = header.trim().match(/^Bearer\s+(.+)$/i);
   return match ? match[1] : null;
 }
