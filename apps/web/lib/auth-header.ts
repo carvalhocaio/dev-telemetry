@@ -9,6 +9,6 @@ export function readBearerToken(request: Request): string | null {
     return null;
   }
 
-  const match = /^Bearer\s+(.+)$/i.exec(header.trim());
+  const match = header.trim().match(/^Bearer\s+(.+)$/i);
   return match ? match[1] : null;
 }
