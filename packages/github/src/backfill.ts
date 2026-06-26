@@ -375,7 +375,8 @@ async function ingestPrsPage(
     5,
   );
 
-  const rows = newPrs.map((pr) => {
+  // Insert new PRs with full stats.
+  const newRows = newPrs.map((pr) => {
     const body = pr.body ? capPrBody(pr.body) : null;
     const stats = prStatsMap.get(pr.number) ?? { additions: 0, deletions: 0, changedFiles: 0 };
     return {
@@ -394,12 +395,40 @@ async function ingestPrsPage(
     };
   });
 
-  if (rows.length > 0) {
+  if (newRows.length > 0) {
     await db
       .insert(pullRequest)
-      .values(rows)
-      .onConflictDoNothing({
+      .values(newRows)
+      .onConflictDoNothing({ target: [pullRequest.userId, pullRequest.repoId, pullRequest.number] });
+  }
+
+  // Always update state + ghMergedAt for all PRs on this page (including existing ones
+  // that may have transitioned from open → merged/closed since last sync).
+  if (userPrs.length > 0) {
+    const stateRows = userPrs.map((pr) => ({
+      userId,
+      repoId,
+      number: pr.number,
+      title: pr.title,
+      body: pr.body ? capPrBody(pr.body) : null,
+      state: pr.state,
+      ghCreatedAt: new Date(pr.created_at),
+      ghMergedAt: pr.merged_at ? new Date(pr.merged_at) : null,
+      additions: 0,
+      deletions: 0,
+      changedFiles: 0,
+      htmlUrl: pr.html_url,
+    }));
+    await db
+      .insert(pullRequest)
+      .values(stateRows)
+      .onConflictDoUpdate({
         target: [pullRequest.userId, pullRequest.repoId, pullRequest.number],
+        set: {
+          state: sql`excluded.state`,
+          ghMergedAt: sql`excluded."ghMergedAt"`,
+          updatedAt: new Date(),
+        },
       });
   }
 

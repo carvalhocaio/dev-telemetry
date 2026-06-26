@@ -143,7 +143,7 @@ async function prAggregates(
       select
         ${bucket} as "bucket",
         count(*) as "pr_count",
-        count(*) filter (where ${eq(pullRequest.state, "merged")}) as "pr_merged",
+        count(*) filter (where ${pullRequest.ghMergedAt} is not null) as "pr_merged",
         count(*) filter (where ${eq(pullRequest.state, "open")}) as "pr_open"
       from ${pullRequest}
       ${join}
