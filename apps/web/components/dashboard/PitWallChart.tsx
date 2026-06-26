@@ -31,8 +31,15 @@ interface DotRenderProps {
   payload?: ChartDatum;
 }
 
-const ACCENT = "#00ff41";
 const AXIS_FILL = "#5a5a7a";
+const LINE_COLOR = "#1e1e1e";
+
+function levelColor(composite: number): string {
+  if (composite >= 0.9) return "#a855f7"; // muito_acima
+  if (composite >= 0.8) return "#f97316"; // acima
+  if (composite >= 0.5) return "#00ff41"; // atendendo
+  return "#f59e0b";                       // abaixo
+}
 
 const MONTHS_PT = [
   "jan", "fev", "mar", "abr", "mai", "jun",
@@ -83,13 +90,15 @@ export default function PitWallChart({
 
   function renderDot({ cx, cy, payload }: DotRenderProps): React.ReactElement {
     const selected = payload?.period === selectedPeriod;
+    const color = levelColor(payload?.composite ?? 0);
     return (
       <circle
         cx={cx}
         cy={cy}
-        r={selected ? 5 : 0}
-        fill={ACCENT}
-        stroke={ACCENT}
+        r={selected ? 5 : 3}
+        fill={color}
+        stroke={color}
+        strokeOpacity={selected ? 1 : 0.6}
         cursor="pointer"
       />
     );
@@ -110,9 +119,9 @@ export default function PitWallChart({
           }}
         >
           <defs>
-            <linearGradient id="greenGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={ACCENT} stopOpacity={0.3} />
-              <stop offset="100%" stopColor={ACCENT} stopOpacity={0} />
+            <linearGradient id="subtleFill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={LINE_COLOR} stopOpacity={0.6} />
+              <stop offset="100%" stopColor={LINE_COLOR} stopOpacity={0} />
             </linearGradient>
           </defs>
           <XAxis
@@ -130,11 +139,14 @@ export default function PitWallChart({
           <Area
             type="monotone"
             dataKey="composite"
-            stroke={ACCENT}
-            strokeWidth={2}
-            fill="url(#greenGrad)"
+            stroke={LINE_COLOR}
+            strokeWidth={1.5}
+            fill="url(#subtleFill)"
             dot={renderDot}
-            activeDot={{ r: 6, fill: ACCENT, cursor: "pointer" }}
+            activeDot={(props: { cx?: number; cy?: number; payload?: ChartDatum }) => {
+              const color = levelColor(props.payload?.composite ?? 0);
+              return <circle cx={props.cx} cy={props.cy} r={6} fill={color} stroke={color} cursor="pointer" />;
+            }}
           />
         </AreaChart>
       </ResponsiveContainer>

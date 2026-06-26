@@ -23,8 +23,8 @@ export const WEIGHTS: Record<keyof Components, number> = {
 
 /** Upper-bound cuts, in order. A composite below a cut yields its level. */
 const LEVEL_CUTS: ReadonlyArray<readonly [number, Level]> = [
-  [0.2, "abaixo"],
-  [0.7, "atendendo"],
+  [0.5, "abaixo"],
+  [0.8, "atendendo"],
   [0.9, "acima"],
 ];
 

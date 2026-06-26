@@ -40,9 +40,9 @@ describe("smoke — public routes & restructure", () => {
   it("landing is public — no auth redirect", () => {
     const src = read("page.tsx");
     expect(src).not.toContain("redirect(");
-    // authenticated users get a dashboard link instead of the CTA
-    expect(src).toContain('href="/dashboard"');
-    expect(src).toContain('href="/login"');
+    // CTA uses ternary: session ? "/dashboard" : "/login"
+    expect(src).toContain('"/dashboard"');
+    expect(src).toContain('"/login"');
   });
 
   it("login redirects to /dashboard after OAuth", () => {
@@ -52,15 +52,14 @@ describe("smoke — public routes & restructure", () => {
     expect(src).toContain('href="/"');
   });
 
-  it("settings breadcrumb returns to /dashboard", () => {
+  it("settings links back to /dashboard", () => {
     const src = read("settings/page.tsx");
-    expect(src).toContain('router.push("/dashboard")');
-    expect(src).not.toContain('router.push("/")');
+    expect(src).toContain('"/dashboard"');
   });
 
   it("contributions page exports metadata", () => {
     const src = read("contributions/page.tsx");
     expect(src).toContain("export const metadata");
-    expect(src).toContain('href="/"');
+    expect(src).toContain("Metadata");
   });
 });

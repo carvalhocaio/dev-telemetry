@@ -1,3 +1,5 @@
+import { Info } from "lucide-react";
+
 import { LEVEL_META, type WindowSummary } from "@/types/report";
 
 interface MetricHeroProps {
@@ -23,9 +25,15 @@ export default function MetricHero({ window, profileLabel }: MetricHeroProps) {
         <span className="font-mono text-5xl tabular-nums text-foreground">
           {window.composite.toFixed(2)}
         </span>
-        <span className="font-mono text-[10px] uppercase tracking-widest text-muted">
-          composite
-        </span>
+        <div className="group/hint relative flex items-center gap-1">
+          <span className="font-mono text-[10px] uppercase tracking-widest text-muted">composite</span>
+          <Info size={10} className="shrink-0 cursor-help text-muted/40" />
+          <div className="pointer-events-none absolute bottom-full left-0 z-10 mb-1.5 w-56 rounded border border-border bg-surface px-2 py-1.5 font-mono text-[10px] leading-relaxed text-muted opacity-0 shadow-lg transition-opacity duration-150 group-hover/hint:opacity-100">
+            Score de 0 a 1 calculado por ranking percentual: throughput (45%), dias ativos (35%) e churn (20%).
+            <br />
+            <span className="text-level-abaixo">0–0.5 abaixo</span> · <span className="text-level-atendendo">0.5–0.8 atendendo</span> · <span className="text-level-acima">0.8–0.9 acima</span> · <span className="text-level-muito-acima">0.9–1 muito acima</span>
+          </div>
+        </div>
         {profileLabel && (
           <span className="font-mono text-[10px] text-muted">{profileLabel}</span>
         )}
@@ -61,8 +69,8 @@ export default function MetricHero({ window, profileLabel }: MetricHeroProps) {
           aria-label={`Composite ${window.composite.toFixed(2)}`}
         >
           <div
-            className="h-full bg-accent"
-            style={{ width: `${composite * 100}%` }}
+            className="h-full transition-all"
+            style={{ width: `${composite * 100}%`, backgroundColor: meta.colorVar }}
           />
         </div>
       </div>

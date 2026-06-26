@@ -14,10 +14,10 @@
   --alert: #f59e0b;
 
   /* Semantic level colors. */
-  --level-muito-acima: #00ff41;
-  --level-acima: #00cc33;
-  --level-atendendo: #e8e4da;
-  --level-abaixo: #5a5a7a;
+  --level-muito-acima: #a855f7;
+  --level-acima: #f97316;
+  --level-atendendo: #00ff41;
+  --level-abaixo: #f59e0b;
   --background: #080808;
   --foreground: #e8e4da;
   --card: oklch(1 0 0);

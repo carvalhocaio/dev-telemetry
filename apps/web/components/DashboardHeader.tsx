@@ -4,7 +4,6 @@ import { LogOut } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-import AiPoweredBadge from "@/components/AiPoweredBadge";
 import ScopeSelector from "@/components/ScopeSelector";
 import SyncButton from "@/components/SyncButton";
 import { signOut } from "@/lib/auth-client";
@@ -71,7 +70,6 @@ export default function DashboardHeader() {
       </div>
 
       <div className="flex items-center gap-3">
-        <AiPoweredBadge />
         <SyncButton />
         <ScopeSelector currentScope={scope} currentMode={mode} orgs={orgs} />
         <button
