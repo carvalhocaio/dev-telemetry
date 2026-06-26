@@ -19,7 +19,7 @@ export default function MetricHero({ window, profileLabel }: MetricHeroProps) {
   return (
     <section
       aria-label="Métrica principal da janela"
-      className="grid grid-cols-1 gap-6 sm:grid-cols-3 sm:items-end"
+      className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:items-end"
     >
       <div className="flex flex-col gap-0.5">
         <span className="font-mono text-5xl tabular-nums text-foreground">
@@ -37,15 +37,6 @@ export default function MetricHero({ window, profileLabel }: MetricHeroProps) {
         {profileLabel && (
           <span className="font-mono text-[10px] text-muted">{profileLabel}</span>
         )}
-      </div>
-
-      <div className="flex flex-col gap-0.5">
-        <span className="font-mono text-4xl tabular-nums text-foreground">
-          {window.commitCount.toLocaleString("pt-BR")}
-        </span>
-        <span className="font-mono text-[10px] uppercase tracking-widest text-muted">
-          commits
-        </span>
       </div>
 
       <div className="flex flex-col gap-2">
