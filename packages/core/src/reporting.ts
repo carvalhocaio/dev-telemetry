@@ -81,7 +81,7 @@ function toPeriodReport(
   const rate = mergeRate(m);
   return {
     period: m.period,
-    level: c.level,
+    level: toLevel(Math.round(c.composite * 100) / 100),
     composite: round4(c.composite),
     components: {
       throughput: round4(c.components.throughput),
@@ -131,7 +131,7 @@ export function summarizeWindow(
   return {
     start: start !== undefined ? start : minPeriod,
     end: end !== undefined ? end : maxPeriod,
-    level: toLevel(composite),
+    level: toLevel(Math.round(composite * 100) / 100),
     composite: round4(composite),
     commitCount: sum((m) => m.commitCount),
     prCount: sum((m) => m.prCount),
