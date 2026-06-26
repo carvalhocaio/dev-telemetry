@@ -90,6 +90,7 @@ export default function PitWallChart({
         r={selected ? 5 : 0}
         fill={ACCENT}
         stroke={ACCENT}
+        cursor="pointer"
       />
     );
   }
@@ -97,7 +98,7 @@ export default function PitWallChart({
   return (
     <section
       aria-label="Histórico de desempenho por período"
-      className="border-t border-b border-border py-4"
+      className="py-4"
     >
       <ResponsiveContainer width="100%" height={200}>
         <AreaChart
@@ -119,7 +120,7 @@ export default function PitWallChart({
             tickFormatter={(period: string) => formatLabel(period, resolution)}
             tick={{ fontFamily: "monospace", fontSize: 10, fill: AXIS_FILL }}
             tickLine={false}
-            axisLine={{ stroke: "#1a1a1a" }}
+            axisLine={false}
           />
           <YAxis domain={[0, 1]} hide />
           <Tooltip
@@ -133,7 +134,7 @@ export default function PitWallChart({
             strokeWidth={2}
             fill="url(#greenGrad)"
             dot={renderDot}
-            activeDot={{ r: 6, fill: ACCENT }}
+            activeDot={{ r: 6, fill: ACCENT, cursor: "pointer" }}
           />
         </AreaChart>
       </ResponsiveContainer>
