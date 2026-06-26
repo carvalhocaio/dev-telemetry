@@ -68,7 +68,7 @@ export default function CustomSelect({
         />
       </button>
       {open && (
-        <div className="absolute left-0 top-[calc(100%+4px)] z-20 min-w-[10rem] overflow-hidden rounded border border-surface bg-background shadow-lg">
+        <div className="absolute left-0 top-[calc(100%+4px)] z-20 w-max min-w-full overflow-hidden rounded border border-surface bg-background shadow-lg">
           {groups.map(({ group, opts }) => (
             <div key={group ?? "__ungrouped"}>
               {group && (
@@ -81,7 +81,7 @@ export default function CustomSelect({
                   key={opt.value}
                   type="button"
                   onClick={() => { onChange(opt.value); setOpen(false); }}
-                  className={`block w-full cursor-pointer px-3 py-2 text-left font-mono text-sm transition-colors hover:bg-surface/60 hover:text-accent ${
+                  className={`block w-full cursor-pointer whitespace-nowrap px-3 py-2 text-left font-mono text-sm transition-colors hover:bg-surface/60 hover:text-accent ${
                     opt.value === value ? "text-accent" : "text-foreground"
                   }`}
                 >
