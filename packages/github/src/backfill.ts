@@ -251,22 +251,22 @@ async function ingestCommitsPage(
     return { count: 0, hasMore, deltaBytes: 0 };
   }
 
-  // Identify commits already in the DB so we only fetch stats for new ones.
-  const knownShas = new Set(
-    (
-      await db
-        .select({ sha: commit.sha })
-        .from(commit)
-        .where(and(eq(commit.userId, userId), inArray(commit.sha, candidates.map((c) => c.sha))))
-    ).map((r) => r.sha),
-  );
+  // Identify commits in the DB and whether they already have stats.
+  const known = await db
+    .select({ sha: commit.sha, additions: commit.additions })
+    .from(commit)
+    .where(and(eq(commit.userId, userId), inArray(commit.sha, candidates.map((c) => c.sha))));
 
-  const newCandidates = candidates.filter((c) => !knownShas.has(c.sha));
+  const knownShas = new Set(known.map((r) => r.sha));
+  // Commits in DB with additions=0 were ingested before stats fetching was added.
+  const missingStatsShas = new Set(known.filter((r) => r.additions === 0).map((r) => r.sha));
 
-  // Fetch individual stats for new commits only (listCommits never returns stats).
+  // Fetch stats for: new commits + existing commits missing stats.
+  const needStats = candidates.filter((c) => !knownShas.has(c.sha) || missingStatsShas.has(c.sha));
+
   const statsMap = new Map<string, { additions: number; deletions: number; changedFiles: number }>();
   await pLimit(
-    newCandidates.map((c) => async () => {
+    needStats.map((c) => async () => {
       try {
         const detail = await octokit.rest.repos.getCommit({ owner, repo: repoName, ref: c.sha });
         statsMap.set(c.sha, {
@@ -281,7 +281,7 @@ async function ingestCommitsPage(
     5,
   );
 
-  const rows = newCandidates.map((c) => {
+  const rows = candidates.map((c) => {
     const stats = statsMap.get(c.sha) ?? { additions: 0, deletions: 0, changedFiles: 0 };
     return {
       userId,
@@ -300,7 +300,14 @@ async function ingestCommitsPage(
     await db
       .insert(commit)
       .values(rows)
-      .onConflictDoNothing({ target: [commit.userId, commit.sha] });
+      .onConflictDoUpdate({
+        target: [commit.userId, commit.sha],
+        set: {
+          additions: sql`excluded.additions`,
+          deletions: sql`excluded.deletions`,
+          changedFiles: sql`excluded."changedFiles"`,
+        },
+      });
   }
 
   const deltaBytes = rows.reduce((sum, r) => sum + estimateCommitBytes(r.message), 0);
