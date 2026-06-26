@@ -77,7 +77,7 @@ export default function DashboardHeader() {
           onClick={handleSignOut}
           aria-label="Sair"
           title="Sair"
-          className="inline-flex items-center justify-center rounded-md border border-surface bg-surface/40 p-1.5 text-muted transition-colors hover:border-level-abaixo hover:text-level-abaixo"
+          className="inline-flex items-center justify-center rounded-md border border-surface bg-surface/40 p-1.5 text-muted transition-colors hover:border-red-600 hover:text-red-600"
         >
           <LogOut size={14} aria-hidden="true" />
         </button>

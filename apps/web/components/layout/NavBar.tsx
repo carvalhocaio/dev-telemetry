@@ -1,15 +1,17 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
+import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
-  { label: "INÍCIO", href: "/" },
-  { label: "PAINEL", href: "/dashboard" },
-  { label: "SETUP", href: "/settings" },
-  { label: "DOCS", href: "/contributions" },
+  { label: "INÍCIO",  href: "/",             auth: false },
+  { label: "PAINEL",  href: "/dashboard",    auth: true  },
+  { label: "SETUP",   href: "/settings",     auth: true  },
+  { label: "DOCS",    href: "/contributions", auth: false },
 ] as const;
 
 function isActive(pathname: string, href: string): boolean {
@@ -19,6 +21,14 @@ function isActive(pathname: string, href: string): boolean {
 
 export default function NavBar() {
   const pathname = usePathname();
+  const { data: session } = authClient.useSession();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
+
+  // Before mount: show all links (server render matches, no hydration mismatch).
+  // After mount: hide auth-only links when logged out.
+  const isLoggedIn = !mounted || !!session;
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background">
@@ -35,7 +45,7 @@ export default function NavBar() {
 
         <nav aria-label="Navegação principal">
           <ul className="flex items-center gap-6">
-            {NAV_LINKS.map((link) => {
+            {NAV_LINKS.filter((link) => !link.auth || isLoggedIn).map((link) => {
               const active = isActive(pathname, link.href);
               return (
                 <li key={link.href}>
