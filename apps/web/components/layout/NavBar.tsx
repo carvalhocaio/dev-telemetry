@@ -3,22 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
-interface NavLink {
-  label: string;
-  href: string;
-  /** When true, the link is only shown to authenticated users. */
-  authOnly?: boolean;
-}
-
-const NAV_LINKS: NavLink[] = [
+const NAV_LINKS = [
   { label: "INÍCIO", href: "/" },
-  { label: "PAINEL", href: "/dashboard", authOnly: true },
-  { label: "SETUP", href: "/settings", authOnly: true },
+  { label: "PAINEL", href: "/dashboard" },
+  { label: "SETUP", href: "/settings" },
   { label: "DOCS", href: "/contributions" },
-];
+] as const;
 
 function isActive(pathname: string, href: string): boolean {
   if (href === "/") return pathname === "/";
@@ -27,10 +19,6 @@ function isActive(pathname: string, href: string): boolean {
 
 export default function NavBar() {
   const pathname = usePathname();
-  const { data: session } = authClient.useSession();
-  const isAuthenticated = Boolean(session);
-
-  const links = NAV_LINKS.filter((link) => !link.authOnly || isAuthenticated);
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background">
@@ -44,7 +32,7 @@ export default function NavBar() {
 
         <nav aria-label="Navegação principal">
           <ul className="flex items-center gap-6">
-            {links.map((link) => {
+            {NAV_LINKS.map((link) => {
               const active = isActive(pathname, link.href);
               return (
                 <li key={link.href}>
