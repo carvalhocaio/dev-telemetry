@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { useAutoSync } from "@/hooks/useAutoSync";
 import InsightPanel from "@/components/dashboard/InsightPanel";
 import MetricHero from "@/components/dashboard/MetricHero";
 import MetricsRow from "@/components/dashboard/MetricsRow";
@@ -32,6 +33,7 @@ export default function DashboardView({
   profileLabel,
 }: DashboardViewProps) {
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
+  useAutoSync();
 
   return (
     <div className="flex flex-col gap-8">

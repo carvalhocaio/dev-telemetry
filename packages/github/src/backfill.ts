@@ -22,7 +22,7 @@ import {
 // Cursor
 // ---------------------------------------------------------------------------
 
-export type SyncMode = "full" | "recent";
+export type SyncMode = "full" | "recent" | "week";
 export type SyncPhase = "repos" | "commits" | "prs" | "done";
 
 export interface SyncCursor {
@@ -381,7 +381,9 @@ export async function runBackfillBatch(
     page: 1,
     since: job.mode === "recent"
       ? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
-      : undefined,
+      : job.mode === "week"
+        ? new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+        : undefined,
   };
 
   try {

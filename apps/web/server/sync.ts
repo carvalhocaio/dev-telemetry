@@ -105,7 +105,7 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
     },
     {
       body: t.Object({
-        mode: t.Union([t.Literal("full"), t.Literal("recent")]),
+        mode: t.Union([t.Literal("full"), t.Literal("recent"), t.Literal("week")]),
       }),
     },
   )
