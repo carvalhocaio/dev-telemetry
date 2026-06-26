@@ -86,8 +86,8 @@ export default function Dashboard() {
         </button>
       </div>
       {filterOpen && (
-        <div id="custom-range-filter">
-          <CustomRangeFilter value={custom} />
+        <div id="custom-range-filter" className="flex justify-end">
+          <CustomRangeFilter value={custom} onApply={() => setFilterOpen(false)} />
         </div>
       )}
     </>

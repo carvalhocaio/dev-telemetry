@@ -2,7 +2,7 @@
 
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 
 import { Calendar } from "@/components/ui/calendar";
@@ -11,6 +11,7 @@ import type { Granularity } from "@/types/report";
 
 interface CustomRangeFilterProps {
   value?: CustomRange;
+  onApply?: () => void;
 }
 
 const MAX_BARS = 45;
@@ -33,8 +34,10 @@ function allowedResolutions(start: Date | undefined, end: Date | undefined) {
 const START_MONTH = new Date(2020, 0);
 const END_MONTH = new Date(new Date().getFullYear() + 1, 11);
 
-export default function CustomRangeFilter({ value }: CustomRangeFilterProps) {
+export default function CustomRangeFilter({ value, onApply }: CustomRangeFilterProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const scope = searchParams.get("scope");
 
   const [startDate, setStartDate] = useState<Date | undefined>(
     value?.start ? new Date(value.start) : undefined,
@@ -76,7 +79,9 @@ export default function CustomRangeFilter({ value }: CustomRangeFilterProps) {
       start: format(startDate, "yyyy-MM-dd"),
       end: format(endDate, "yyyy-MM-dd"),
     });
+    if (scope) params.set("scope", scope);
     router.push(`/dashboard?${params.toString()}`);
+    onApply?.();
   }
 
   const calendarProps = {
