@@ -1,13 +1,13 @@
 "use client";
 
-import { ArrowLeft, ArrowRight, Check, Loader2 } from "lucide-react";
+import { ArrowRight, Check, Loader2 } from "lucide-react";
 import CustomSelect from "@/components/CustomSelect";
 import type { SelectOption } from "@/components/CustomSelect";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import Link from "next/link";
-import { signOut, useSession } from "@/lib/auth-client";
+import { useSession } from "@/lib/auth-client";
 
 const QUOTA_BYTES = 3 * 1024 * 1024 * 1024;
 const LLM_PROVIDERS = ["gemini", "openai", "anthropic"] as const;
@@ -372,11 +372,6 @@ export default function SettingsPage() {
     }
   }
 
-  async function handleSignOut() {
-    await signOut();
-    router.replace("/login");
-  }
-
   if (sessionPending || !session) return null;
 
   const bytesUsed = config?.bytesUsed ?? 0;
@@ -388,30 +383,11 @@ export default function SettingsPage() {
     : config?.profileLabel ?? null;
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-8 px-4 py-8 sm:px-6">
-      {/* breadcrumb */}
-      <div className="flex items-center justify-between">
-        <button
-          type="button"
-          onClick={() => router.push("/dashboard")}
-          className="flex cursor-pointer items-center gap-2 font-mono text-xs text-muted hover:text-accent transition-colors"
-        >
-          <ArrowLeft size={12} aria-hidden="true" />
-          <span className="text-accent">~/</span>dev-telemetry
-        </button>
-        <button
-          type="button"
-          onClick={handleSignOut}
-          className="cursor-pointer font-mono text-xs text-muted hover:text-level-abaixo transition-colors"
-        >
-          sair
-        </button>
-      </div>
-
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-8 sm:px-6">
       {/* heading */}
-      <div className="border-b border-surface pb-4">
-        <h1 className="font-display text-xl font-semibold tracking-tight">
-          <span className="text-accent">$</span> configure dev-telemetry
+      <div className="border-b border-border pb-4">
+        <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
+          <span className="text-accent">$</span> SETUP
         </h1>
         <p className="mt-1 font-mono text-xs text-muted">
           {session.user.name}
@@ -427,7 +403,7 @@ export default function SettingsPage() {
         <div className="flex items-center justify-between">
           <h2 className="font-mono text-xs uppercase tracking-wider text-muted">GitHub PAT</h2>
           {config?.hasPat && (
-            <span className="flex items-center gap-1 font-mono text-[10px] text-level-acima">
+            <span className="flex items-center gap-1 font-mono text-[10px] text-accent-dim">
               <Check size={10} /> configurado
             </span>
           )}
@@ -445,7 +421,7 @@ export default function SettingsPage() {
             value={pat}
             onChange={(e) => setPat(e.target.value)}
             placeholder={config?.hasPat ? "substituir token atual…" : "ghp_…"}
-            className="flex-1 rounded border border-surface bg-surface/40 px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted/50 outline-none focus-visible:border-accent focus-visible:ring-1 focus-visible:ring-accent"
+            className="flex-1 rounded border border-border bg-surface px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted/50 outline-none focus-visible:border-accent focus-visible:ring-1 focus-visible:ring-accent/30"
           />
           <button
             type="button"
@@ -458,13 +434,13 @@ export default function SettingsPage() {
           </button>
         </div>
         {patError && (
-          <p className="font-mono text-xs text-level-abaixo">{patError}</p>
+          <p className="font-mono text-xs text-alert">{patError}</p>
         )}
       </section>
 
       {/* Sync scopes section — only shown when PAT is configured and data loaded */}
       {config?.hasPat && scopesLoaded && (
-        <section className="space-y-3">
+        <section className="space-y-3 border-t border-border pt-6">
           <div className="flex items-center justify-between">
             <h2 className="font-mono text-xs uppercase tracking-wider text-muted">Escopos de Sync</h2>
             <button
@@ -487,7 +463,7 @@ export default function SettingsPage() {
               return (
                 <label
                   key={token}
-                  className="flex cursor-pointer items-center gap-3 rounded border border-surface bg-surface/40 px-3 py-2 font-mono text-sm transition-colors hover:border-accent"
+                  className="flex cursor-pointer items-center gap-3 rounded border border-border bg-surface px-3 py-2 font-mono text-sm transition-colors hover:border-accent"
                 >
                   <input
                     type="checkbox"
@@ -512,17 +488,17 @@ export default function SettingsPage() {
             {scopesSaved ? "salvo" : "salvar escopos"}
           </button>
           {scopesError && (
-            <p className="font-mono text-xs text-level-abaixo">{scopesError}</p>
+            <p className="font-mono text-xs text-alert">{scopesError}</p>
           )}
         </section>
       )}
 
       {/* LLM section */}
-      <section className="space-y-3">
+      <section className="space-y-3 border-t border-border pt-6">
         <div className="flex items-center justify-between">
           <h2 className="font-mono text-xs uppercase tracking-wider text-muted">Provedor LLM</h2>
           {config?.hasLlmKey && (
-            <span className="flex items-center gap-1 font-mono text-[10px] text-level-acima">
+            <span className="flex items-center gap-1 font-mono text-[10px] text-accent-dim">
               <Check size={10} /> configurado · {config.llmProvider} / {config.llmModel}
             </span>
           )}
@@ -538,14 +514,14 @@ export default function SettingsPage() {
             value={model}
             onChange={(e) => setModel(e.target.value)}
             placeholder="modelo"
-            className="rounded border border-surface bg-surface/40 px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted/50 outline-none focus-visible:border-accent"
+            className="rounded border border-border bg-surface px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted/50 outline-none focus-visible:border-accent focus-visible:ring-1 focus-visible:ring-accent/30"
           />
           <input
             type="password"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
             placeholder={config?.hasLlmKey ? "substituir chave…" : "API key…"}
-            className="rounded border border-surface bg-surface/40 px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted/50 outline-none focus-visible:border-accent"
+            className="rounded border border-border bg-surface px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted/50 outline-none focus-visible:border-accent focus-visible:ring-1 focus-visible:ring-accent/30"
           />
         </div>
         <button
@@ -558,12 +534,12 @@ export default function SettingsPage() {
           {llmSaved ? "salvo" : "salvar configuração LLM"}
         </button>
         {llmError && (
-          <p className="font-mono text-xs text-level-abaixo">{llmError}</p>
+          <p className="font-mono text-xs text-alert">{llmError}</p>
         )}
       </section>
 
       {/* Profile section */}
-      <section className="space-y-3">
+      <section className="space-y-3 border-t border-border pt-6">
         <div className="flex items-center justify-between">
           <h2 className="font-mono text-xs uppercase tracking-wider text-muted">Perfil de mercado</h2>
           {activeProfileLabel && (
@@ -588,7 +564,7 @@ export default function SettingsPage() {
               onChange={(e) => setCustomProfileContent(e.target.value)}
               maxLength={MAX_PROFILE_LENGTH}
               placeholder="Cole aqui o markdown do perfil de mercado…"
-              className="w-full rounded border border-surface bg-surface/40 px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted/50 outline-none focus-visible:border-accent"
+              className="w-full rounded border border-border bg-surface px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted/50 outline-none focus-visible:border-accent focus-visible:ring-1 focus-visible:ring-accent/30"
             />
             <p className="text-right font-mono text-[10px] text-muted/60">
               {customProfileContent.length} / {MAX_PROFILE_LENGTH}
@@ -606,14 +582,14 @@ export default function SettingsPage() {
           {profileSaved ? "salvo" : "salvar perfil"}
         </button>
         {profileError && (
-          <p className="font-mono text-xs text-level-abaixo">{profileError}</p>
+          <p className="font-mono text-xs text-alert">{profileError}</p>
         )}
       </section>
 
       {/* Storage meter */}
-      <section className="space-y-2">
+      <section className="space-y-2 border-t border-border pt-6">
         <h2 className="font-mono text-xs uppercase tracking-wider text-muted">Armazenamento</h2>
-        <div className="rounded border border-surface bg-surface/40 p-4 font-mono text-xs space-y-1">
+        <div className="rounded border border-border bg-surface p-4 font-mono text-xs space-y-1">
           <div className="flex w-full items-center gap-1 text-muted">
             <span>[</span>
             <div className="relative flex-1 overflow-hidden leading-none">
@@ -636,11 +612,11 @@ export default function SettingsPage() {
       </section>
 
       {/* Sync section */}
-      <section className="space-y-3">
+      <section className="space-y-3 border-t border-border pt-6">
         <h2 className="font-mono text-xs uppercase tracking-wider text-muted">Sincronização</h2>
 
         {syncJob && (
-          <div className="rounded border border-surface bg-surface/40 p-4 font-mono text-xs space-y-1">
+          <div className="rounded border border-border bg-surface p-4 font-mono text-xs space-y-1">
             {syncJob.status === "running" || syncing ? (
               <>
                 <div className="flex w-full items-center gap-1 text-muted">
@@ -669,11 +645,11 @@ export default function SettingsPage() {
                 </p>
               </>
             ) : (
-              <p className={syncJob.status === "error" ? "text-level-abaixo" : "text-muted"}>
+              <p className={syncJob.status === "error" ? "text-alert" : "text-muted"}>
                 {syncJob.status === "done" && (
                   <span className="flex items-center justify-between gap-4">
                     <span>
-                      <span className="text-level-acima">✓</span>{" "}
+                      <span className="text-accent-dim">✓</span>{" "}
                       carga concluída · {syncJob.commits.toLocaleString("pt-BR")} commits ·{" "}
                       {syncJob.prs.toLocaleString("pt-BR")} PRs
                     </span>
@@ -697,7 +673,7 @@ export default function SettingsPage() {
             type="button"
             onClick={() => startSync("incremental")}
             disabled={syncing || !config?.hasPat}
-            className="inline-flex cursor-pointer items-center gap-2 rounded border border-surface bg-surface/40 px-3 py-2 font-mono text-xs text-foreground transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex cursor-pointer items-center gap-2 rounded border border-border bg-surface px-3 py-2 font-mono text-xs text-foreground transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-50"
           >
             {syncing ? <Loader2 size={12} className="animate-spin" /> : null}
             sync incremental

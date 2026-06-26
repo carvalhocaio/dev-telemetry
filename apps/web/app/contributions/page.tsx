@@ -1,19 +1,18 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 
 const REPO_URL = "https://github.com/dev-telemetry/dev-telemetry";
 const ISSUES_URL = `${REPO_URL}/issues`;
 const DISCUSSIONS_URL = `${REPO_URL}/discussions`;
 
 export const metadata: Metadata = {
-  title: "Contribuir",
+  title: "Docs",
   description:
-    "Como contribuir com o dev-telemetry: issues, PRs, rubricas de perfil, novos provedores LLM e traduções.",
+    "Docs do dev-telemetry: issues, PRs, rubricas de perfil, novos provedores LLM e traduções.",
   openGraph: {
     type: "website",
-    title: "Contribuir · dev-telemetry",
+    title: "Docs · dev-telemetry",
     description:
-      "Guia de contribuição do dev-telemetry — projeto OSS, multi-tenant e self-hostable.",
+      "Docs do dev-telemetry — projeto OSS, multi-tenant e self-hostable.",
   },
 };
 
@@ -46,19 +45,11 @@ const ENV_VARS = [
  */
 export default function ContributionsPage() {
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-10 px-4 py-16">
-      {/* breadcrumb */}
-      <Link
-        href="/"
-        className="font-mono text-xs text-muted transition-colors hover:text-accent"
-      >
-        <span className="text-accent">~</span> / dev-telemetry
-      </Link>
-
+    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-10 px-4 py-16">
       {/* heading */}
       <div className="space-y-2">
-        <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
-          <span className="text-accent">$</span> contribute
+        <h1 className="font-display text-4xl font-bold tracking-tight text-foreground">
+          <span className="text-accent">$</span> docs
         </h1>
         <p className="font-mono text-sm text-muted">
           dev-telemetry é OSS, multi-tenant e self-hostable. contribuições são
@@ -71,7 +62,7 @@ export default function ContributionsPage() {
         <h2 className="font-mono text-xs uppercase tracking-wider text-muted">
           o que aceitamos
         </h2>
-        <ul className="border border-surface bg-surface/40 p-4 font-mono text-xs space-y-1">
+        <ul className="border border-border bg-surface p-4 font-mono text-xs space-y-1">
           {WELCOME.map((item) => (
             <li key={item} className="text-muted">
               <span className="text-accent">·</span> {item}
@@ -85,7 +76,7 @@ export default function ContributionsPage() {
         <h2 className="font-mono text-xs uppercase tracking-wider text-muted">
           setup local
         </h2>
-        <div className="border border-surface bg-surface/40 p-4 font-mono text-xs space-y-1">
+        <div className="border border-border bg-surface p-4 font-mono text-xs space-y-1">
           {SETUP_LINES.map((line) => (
             <p key={line} className="text-muted">
               <span className="text-accent">{line.slice(0, 1)}</span>
@@ -100,7 +91,7 @@ export default function ContributionsPage() {
         <h2 className="font-mono text-xs uppercase tracking-wider text-muted">
           variáveis de ambiente
         </h2>
-        <div className="border border-surface bg-surface/40 p-4 font-mono text-xs space-y-1">
+        <div className="border border-border bg-surface p-4 font-mono text-xs space-y-1">
           {ENV_VARS.map((line) => (
             <p key={line} className="text-muted whitespace-pre">
               {line}
@@ -114,7 +105,7 @@ export default function ContributionsPage() {
         <h2 className="font-mono text-xs uppercase tracking-wider text-muted">
           links
         </h2>
-        <div className="border border-surface bg-surface/40 p-4 font-mono text-xs space-y-1">
+        <div className="border border-border bg-surface p-4 font-mono text-xs space-y-1">
           <p className="text-muted">
             <span className="text-accent">→</span>{" "}
             <a
@@ -139,15 +130,6 @@ export default function ContributionsPage() {
           </p>
         </div>
       </section>
-
-      {/* footer / back nav */}
-      <footer className="border-t border-surface pt-4 font-mono text-xs text-muted/50 leading-relaxed">
-        <Link href="/" className="transition-colors hover:text-accent">
-          ← voltar à landing
-        </Link>
-        <br />
-        licença MIT
-      </footer>
     </main>
   );
 }

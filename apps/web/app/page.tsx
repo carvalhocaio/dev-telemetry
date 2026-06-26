@@ -3,11 +3,6 @@ import { headers } from "next/headers";
 
 import { auth } from "@/lib/auth";
 
-const REPO_URL = "https://github.com/dev-telemetry/dev-telemetry";
-
-const CTA_CLASS =
-  "w-full flex items-center justify-center gap-3 border border-muted bg-transparent font-mono text-sm text-foreground px-4 py-3 transition-colors hover:border-accent hover:text-accent";
-
 const FEATURES = [
   "sync de commits e PRs direto do GitHub via PAT",
   "narrativa de produtividade com LLM multi-provider (gemini · openai · anthropic)",
@@ -31,82 +26,71 @@ export default async function LandingPage() {
   const session = await auth.api.getSession({ headers: await headers() });
 
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col gap-10 px-4 py-16">
-      {/* breadcrumb */}
+    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-16 px-6 py-16">
+      {/* breadcrumb / eyebrow */}
       <p className="font-mono text-xs text-muted">
-        <span className="text-accent">~</span> / dev-telemetry
+        <span className="text-accent">~/</span> dev-telemetry
       </p>
 
       {/* hero */}
-      <div className="space-y-2">
-        <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
+      <section>
+        <h1 className="font-display text-6xl font-bold tracking-tight text-foreground">
           <span className="text-accent">$</span> dev-telemetry
         </h1>
-        <p className="font-mono text-sm text-muted">
-          telemetria para devs — OSS, multi-tenant, self-hostable
+        <p className="mt-3 max-w-lg font-mono text-sm text-muted">
+          telemetria para devs — commits, PRs e narrativa IA em tempo real
         </p>
-      </div>
+      </section>
 
       {/* terminal demo block */}
-      <div className="border border-surface bg-surface/40 p-4 font-mono text-xs space-y-1">
-        <p className="text-muted">
-          <span className="text-accent">$</span>{" "}
-          <span className="text-foreground">whoami</span>
+      <div className="space-y-2 border border-border bg-surface p-6 font-mono text-sm">
+        <p>
+          <span className="text-accent">$</span>
+          <span className="text-foreground"> whoami</span>
         </p>
         {DEMO_LINES.map((line) => (
           <p key={line} className="text-muted">
             {line}
           </p>
         ))}
+        <p className="mt-4">
+          <span className="text-accent">$</span>
+          <span className="animate-pulse text-muted"> _</span>
+        </p>
       </div>
 
-      {/* feature list */}
-      <ul className="border border-surface bg-surface/40 p-4 font-mono text-xs space-y-1">
-        {FEATURES.map((feature) => (
-          <li key={feature} className="text-muted">
-            <span className="text-accent">·</span> {feature}
-          </li>
-        ))}
-      </ul>
+      {/* feature grid */}
+      <section>
+        <h2 className="mb-6 font-mono text-[10px] uppercase tracking-widest text-muted">
+          CAPACIDADES
+        </h2>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {FEATURES.map((feature) => (
+            <div key={feature} className="border border-border bg-surface p-4">
+              <span aria-hidden className="font-mono text-xs text-accent">
+                ·
+              </span>
+              <p className="mt-1 font-mono text-sm text-foreground">{feature}</p>
+            </div>
+          ))}
+        </div>
+      </section>
 
       {/* CTA */}
-      <div className="space-y-3">
-        {session ? (
-          <Link href="/dashboard" className={CTA_CLASS}>
-            <span aria-hidden="true" className="text-accent">
-              █
-            </span>
-            ir para o dashboard →
-          </Link>
-        ) : (
-          <Link href="/login" className={CTA_CLASS}>
-            <span aria-hidden="true" className="text-accent">
-              █
-            </span>
-            Entrar com GitHub
-          </Link>
-        )}
+      <section className="flex max-w-sm flex-col gap-3">
+        <Link
+          href={session ? "/dashboard" : "/login"}
+          className="flex items-center justify-center gap-3 border border-accent bg-transparent px-6 py-4 font-mono text-sm text-accent transition-colors hover:bg-accent hover:text-background"
+        >
+          {session ? "IR PARA O PAINEL →" : "CONECTAR VIA GITHUB →"}
+        </Link>
         <Link
           href="/contributions"
-          className="block font-mono text-xs text-muted transition-colors hover:text-accent"
+          className="text-center font-mono text-xs text-muted transition-colors hover:text-accent"
         >
-          <span className="text-accent">$</span> contribuir →
+          <span className="text-accent">$</span> contribuir para o projeto
         </Link>
-      </div>
-
-      {/* footer */}
-      <footer className="border-t border-surface pt-4 font-mono text-xs text-muted/50 leading-relaxed">
-        <a
-          href={REPO_URL}
-          target="_blank"
-          rel="noreferrer"
-          className="transition-colors hover:text-accent"
-        >
-          github.com/dev-telemetry/dev-telemetry
-        </a>
-        <br />
-        licença MIT
-      </footer>
+      </section>
     </main>
   );
 }

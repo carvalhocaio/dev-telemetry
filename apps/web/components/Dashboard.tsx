@@ -7,7 +7,6 @@ import { useEffect, useMemo, useState } from "react";
 import CustomRangeFilter from "@/components/CustomRangeFilter";
 import DashboardView from "@/components/DashboardView";
 import ModeSelector from "@/components/ModeSelector";
-import SyncButton from "@/components/SyncButton";
 import { fillPeriods } from "@/lib/calendar";
 import {
   resolveMode,
@@ -40,14 +39,6 @@ export default function Dashboard() {
 
   const { register } = useReportRefetch();
   const [filterOpen, setFilterOpen] = useState(mode === "custom");
-  const [profileLabel, setProfileLabel] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch("/api/me/profile", { credentials: "include" })
-      .then((r) => r.ok ? r.json() as Promise<{ label: string; group: string }> : null)
-      .then((d) => { if (d?.label) setProfileLabel(d.group ? `${d.label} — ${d.group}` : d.label); })
-      .catch(() => null);
-  }, []);
 
   const customRes = custom?.res;
   const customStart = custom?.start;
@@ -76,26 +67,23 @@ export default function Dashboard() {
 
   const modeBar = (
     <>
-      <div className="flex items-center justify-between gap-3">
-        <SyncButton />
-        <div className="flex items-center gap-3">
-          <ModeSelector current={mode} />
-          <button
-            type="button"
-            onClick={() => setFilterOpen((open) => !open)}
-            aria-expanded={filterOpen}
-            aria-controls="custom-range-filter"
-            aria-label="Filtro de data personalizado"
-            title="Filtro de data personalizado"
-            className={`inline-flex items-center justify-center rounded-md border p-1.5 transition-colors hover:border-accent hover:text-foreground ${
-              mode === "custom"
-                ? "border-accent text-accent"
-                : "border-surface bg-surface/40 text-muted"
-            }`}
-          >
-            <SlidersHorizontal size={14} aria-hidden="true" />
-          </button>
-        </div>
+      <div className="flex items-center justify-end gap-3">
+        <ModeSelector current={mode} />
+        <button
+          type="button"
+          onClick={() => setFilterOpen((open) => !open)}
+          aria-expanded={filterOpen}
+          aria-controls="custom-range-filter"
+          aria-label="Filtro de data personalizado"
+          title="Filtro de data personalizado"
+          className={`inline-flex items-center justify-center rounded-md border p-1.5 transition-colors hover:border-accent hover:text-foreground ${
+            mode === "custom"
+              ? "border-accent text-accent"
+              : "border-surface bg-surface/40 text-muted"
+          }`}
+        >
+          <SlidersHorizontal size={14} aria-hidden="true" />
+        </button>
       </div>
       {filterOpen && (
         <div id="custom-range-filter">
@@ -149,7 +137,6 @@ export default function Dashboard() {
         report={report}
         items={items}
         hasData={hasData}
-        profileLabel={profileLabel}
       />
     </>
   );

@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 
-import NarrativePanel from "@/components/NarrativePanel";
-import TerminalChart from "@/components/TerminalChart";
-import WindowSummaryCard from "@/components/WindowSummaryCard";
-import type { ChartItem, Resolution, Report } from "@/types/report";
+import InsightPanel from "@/components/dashboard/InsightPanel";
+import MetricHero from "@/components/dashboard/MetricHero";
+import MetricsRow from "@/components/dashboard/MetricsRow";
+import PitWallChart from "@/components/dashboard/PitWallChart";
+import type { ChartItem, Report, Resolution } from "@/types/report";
 
 interface DashboardViewProps {
   resolution: Resolution;
@@ -17,12 +18,11 @@ interface DashboardViewProps {
 
 /**
  * Client wrapper that owns the selected-period UI state and connects the
- * TerminalChart to the NarrativePanel. The window summary card reflects the
- * active filter; the narrative panel waits for an explicit bar click.
+ * chart to the insight panel. The hero and metrics row reflect the active
+ * filter window; the insight panel waits for an explicit point selection.
  *
- * When the window has no in-range data the chart still renders (as gap-filled
- * "sem dados" bars) and a hint nudges the user to Sync, rather than hiding the
- * chart behind an empty placeholder.
+ * When the window has no in-range data the chart still renders and a hint
+ * nudges the user to Sync, rather than hiding the chart behind a placeholder.
  */
 export default function DashboardView({
   resolution,
@@ -34,13 +34,10 @@ export default function DashboardView({
   const [selectedPeriod, setSelectedPeriod] = useState<string | null>(null);
 
   return (
-    <div className="flex flex-col gap-6">
-      <WindowSummaryCard
-        window={report.window}
-        smallSample={report.meta.smallSample}
-        profileLabel={profileLabel}
-      />
-      <TerminalChart
+    <div className="flex flex-col gap-8">
+      <MetricHero window={report.window} profileLabel={profileLabel} />
+      <MetricsRow window={report.window} />
+      <PitWallChart
         items={items}
         selectedPeriod={selectedPeriod}
         onSelect={setSelectedPeriod}
@@ -52,7 +49,7 @@ export default function DashboardView({
           recente.
         </p>
       )}
-      <NarrativePanel resolution={resolution} period={selectedPeriod} />
+      <InsightPanel resolution={resolution} period={selectedPeriod} />
     </div>
   );
 }
