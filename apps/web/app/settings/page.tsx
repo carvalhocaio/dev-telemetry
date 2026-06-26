@@ -65,6 +65,8 @@ interface SyncJob {
   commits: number;
   prs: number;
   error: string | null;
+  currentRepo: string | null;
+  startedAt: string | null;
 }
 
 function formatBytes(bytes: number): string {
@@ -76,6 +78,16 @@ function formatBytes(bytes: number): string {
 function terminalBar(value: number, total: number, width = 20): string {
   const filled = total > 0 ? Math.round(Math.min(value / total, 1) * width) : 0;
   return "█".repeat(filled) + "░".repeat(width - filled);
+}
+
+function formatEta(job: SyncJob): string | null {
+  if (!job.startedAt || job.reposDone === 0 || job.reposTotal === 0) return null;
+  const elapsed = Date.now() - new Date(job.startedAt).getTime();
+  const remaining = (elapsed / job.reposDone) * (job.reposTotal - job.reposDone);
+  if (remaining <= 0) return null;
+  const secs = Math.round(remaining / 1000);
+  if (secs < 60) return `~${secs}s`;
+  return `~${Math.round(secs / 60)}min`;
 }
 
 export default function SettingsPage() {
@@ -672,16 +684,24 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   <span>]</span>
-                  <span className="ml-1 text-foreground">
+                  <span className="ml-1 shrink-0 text-foreground">
                     {syncJob.reposTotal > 0
-                      ? `${syncJob.reposDone}/${syncJob.reposTotal} repos`
+                      ? `${syncJob.reposDone}/${syncJob.reposTotal}`
                       : syncJob.phase ?? "iniciando…"}
                   </span>
                 </div>
-                <p className="text-muted">
-                  {syncJob.commits.toLocaleString("pt-BR")} commits ·{" "}
-                  {syncJob.prs.toLocaleString("pt-BR")} PRs
-                </p>
+                <div className="flex items-baseline justify-between gap-2">
+                  <p className="text-muted">
+                    {syncJob.commits.toLocaleString("pt-BR")} commits ·{" "}
+                    {syncJob.prs.toLocaleString("pt-BR")} PRs
+                    {syncJob.currentRepo && (
+                      <span className="ml-1 text-muted/60">· {syncJob.currentRepo}</span>
+                    )}
+                  </p>
+                  {formatEta(syncJob) && (
+                    <span className="shrink-0 text-muted/60">{formatEta(syncJob)}</span>
+                  )}
+                </div>
               </>
             ) : (
               <p className={syncJob.status === "error" ? "text-alert" : "text-muted"}>
@@ -710,21 +730,12 @@ export default function SettingsPage() {
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={() => startSync("recent")}
-            disabled={syncing || !config?.hasPat}
-            className="inline-flex cursor-pointer items-center gap-2 rounded border border-border bg-surface px-3 py-2 font-mono text-xs text-foreground transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {syncing ? <Loader2 size={12} className="animate-spin" /> : null}
-            sync 30 dias
-          </button>
-          <button
-            type="button"
             onClick={() => startSync("full")}
             disabled={syncing || !config?.hasPat}
             className="inline-flex cursor-pointer items-center gap-2 rounded border border-accent/40 bg-accent/5 px-3 py-2 font-mono text-xs text-accent/80 transition-colors hover:border-accent hover:text-accent disabled:cursor-not-allowed disabled:opacity-50"
           >
             {syncing ? <Loader2 size={12} className="animate-spin" /> : null}
-            carga completa (all-time)
+            carga completa (todo o período)
           </button>
         </div>
         {!config?.hasPat && (

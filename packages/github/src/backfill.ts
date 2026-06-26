@@ -281,7 +281,10 @@ async function ingestCommitsPage(
     5,
   );
 
-  const rows = candidates.map((c) => {
+  // Only upsert commits we've actually fetched stats for.
+  // Skipping known commits with additions>0 prevents onConflictDoUpdate from
+  // overwriting correct stats with the 0-fallback.
+  const rows = needStats.map((c) => {
     const stats = statsMap.get(c.sha) ?? { additions: 0, deletions: 0, changedFiles: 0 };
     return {
       userId,
@@ -523,7 +526,8 @@ export async function runBackfillBatch(
     if (cursor.phase === "repos") {
       const repoIds = await discoverRepos(db, octokit, userId, userLogin, syncScopes);
       cursor = { ...cursor, phase: "commits", repoIds, repoIndex: 0, page: 1 };
-      await markJobRunning(db, jobId, "commits", cursor, { reposTotal: repoIds.length });
+      // reposTotal = repoIds * 2 (commits pass + PRs pass) so the bar fills linearly.
+      await markJobRunning(db, jobId, "commits", cursor, { reposTotal: repoIds.length * 2 });
       // Fall through to start commits in the same batch.
     }
 
@@ -580,6 +584,7 @@ export async function runBackfillBatch(
           if (hasMore) {
             cursor = { ...cursor, page: cursor.page + 1 };
           } else {
+            reposDone += 1;
             cursor = { ...cursor, repoIndex: cursor.repoIndex + 1, page: 1 };
           }
         }
@@ -596,9 +601,10 @@ export async function runBackfillBatch(
     }
 
     // Transition commits → prs when all repos have been processed.
+    // Keep reposDone (= repoIds.length at this point) so the bar stays at 50%.
     if (cursor.phase === "commits" && cursor.repoIndex >= cursor.repoIds.length) {
       cursor = { ...cursor, phase: "prs", repoIndex: 0, page: 1 };
-      await updateJobCursor(db, jobId, cursor, { reposDone: 0 });
+      await updateJobCursor(db, jobId, cursor, { reposDone });
       return { done: false }; // Let the next batch start the prs phase.
     }
 

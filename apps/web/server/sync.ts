@@ -2,11 +2,12 @@ import "server-only";
 import { and, desc, eq } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { db } from "@dev-telemetry/db/client";
-import { syncJob, user, userSecret } from "@dev-telemetry/db/schema";
+import { repository, syncJob, user, userSecret } from "@dev-telemetry/db/schema";
 import {
   createOctokit,
   runBackfillBatch,
   startSyncJob,
+  type SyncCursor,
 } from "@dev-telemetry/github";
 import { auth } from "@/lib/auth";
 import { appCrypto } from "@/lib/app-crypto";
@@ -126,9 +127,23 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
 
     if (!job) return null;
 
-    // Never expose the cursor (internal state) to the client.
+    // Derive current repo name from cursor for progress display.
+    const cursor = job.cursor as SyncCursor | null;
+    let currentRepo: string | null = null;
+    if (cursor && cursor.repoIndex < cursor.repoIds.length) {
+      const repoId = cursor.repoIds[cursor.repoIndex];
+      if (repoId) {
+        const [repo] = await db
+          .select({ fullName: repository.fullName })
+          .from(repository)
+          .where(eq(repository.id, repoId))
+          .limit(1);
+        currentRepo = repo?.fullName ?? null;
+      }
+    }
+
     const { cursor: _cursor, ...safe } = job;
-    return safe;
+    return { ...safe, currentRepo };
   })
 
   // ---------------------------------------------------------------------------
