@@ -11,6 +11,8 @@ import { signOut } from "@/lib/auth-client";
 import { resolveMode } from "@/lib/range";
 import { isScope, type Scope } from "@/types/report";
 
+const SCOPE_STORAGE_KEY = "dt:scope";
+
 /**
  * Contextual control bar for the dashboard (global navigation lives in NavBar):
  * shows the active profile on the left and the report controls + sign-out on the
@@ -24,6 +26,24 @@ export default function DashboardHeader() {
   const scope: Scope = isScope(rawScope) ? rawScope : "all";
   const [orgs, setOrgs] = useState<string[]>([]);
   const [profileLabel, setProfileLabel] = useState<string | null>(null);
+
+  // Restore persisted scope on first load (when URL has no scope param)
+  useEffect(() => {
+    if (!searchParams.get("scope")) {
+      const saved = localStorage.getItem(SCOPE_STORAGE_KEY);
+      if (saved && saved !== "all") {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("scope", saved);
+        router.replace(`/dashboard?${params.toString()}`);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Persist scope whenever it changes
+  useEffect(() => {
+    localStorage.setItem(SCOPE_STORAGE_KEY, scope);
+  }, [scope]);
 
   useEffect(() => {
     fetch("/api/me/orgs", { credentials: "include" })
