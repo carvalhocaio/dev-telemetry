@@ -343,7 +343,7 @@ export default function SettingsPage() {
     }
   }
 
-  async function startSync(mode: "full" | "incremental") {
+  async function startSync(mode: "full" | "recent") {
     if (syncing) return;
     setSyncing(true);
     try {
@@ -383,7 +383,7 @@ export default function SettingsPage() {
     : config?.profileLabel ?? null;
 
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-4 py-8 sm:px-6">
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-8 sm:px-6">
       {/* heading */}
       <div className="border-b border-border pb-4">
         <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
@@ -671,12 +671,12 @@ export default function SettingsPage() {
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            onClick={() => startSync("incremental")}
+            onClick={() => startSync("recent")}
             disabled={syncing || !config?.hasPat}
             className="inline-flex cursor-pointer items-center gap-2 rounded border border-border bg-surface px-3 py-2 font-mono text-xs text-foreground transition-colors hover:border-accent disabled:cursor-not-allowed disabled:opacity-50"
           >
             {syncing ? <Loader2 size={12} className="animate-spin" /> : null}
-            sync incremental
+            sync 30 dias
           </button>
           <button
             type="button"
