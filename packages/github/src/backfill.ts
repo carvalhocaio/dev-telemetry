@@ -22,7 +22,7 @@ import {
 // Cursor
 // ---------------------------------------------------------------------------
 
-export type SyncMode = "full" | "incremental";
+export type SyncMode = "full" | "recent";
 export type SyncPhase = "repos" | "commits" | "prs" | "done";
 
 export interface SyncCursor {
@@ -379,7 +379,9 @@ export async function runBackfillBatch(
     repoIds: [],
     repoIndex: 0,
     page: 1,
-    since: job.mode === "incremental" ? await getLastSyncDate(db, userId) : undefined,
+    since: job.mode === "recent"
+      ? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+      : undefined,
   };
 
   try {
@@ -478,14 +480,4 @@ export async function runBackfillBatch(
     await finishJob(db, jobId, "error", message);
     throw err;
   }
-}
-
-async function getLastSyncDate(db: Database, userId: string): Promise<string | undefined> {
-  const [last] = await db
-    .select({ startedAt: syncJob.startedAt })
-    .from(syncJob)
-    .where(and(eq(syncJob.userId, userId), eq(syncJob.status, "done")))
-    .orderBy(sql`${syncJob.startedAt} DESC`)
-    .limit(1);
-  return last?.startedAt.toISOString();
 }

@@ -25,7 +25,7 @@ export default function SyncButton() {
       const startRes = await fetch("/api/sync/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "incremental" }),
+        body: JSON.stringify({ mode: "recent" }),
         credentials: "include",
       });
 
