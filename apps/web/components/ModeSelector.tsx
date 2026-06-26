@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 import type { Mode } from "@/types/report";
 
@@ -15,8 +16,18 @@ const MODES: readonly { mode: Mode; label: string }[] = [
   { mode: "todo", label: "Todo o período" },
 ];
 
-/** Switches the time-window mode via the `?mode=` query param. */
+/** Switches the time-window mode via the `?mode=` query param, preserving scope. */
 export default function ModeSelector({ current }: ModeSelectorProps) {
+  const searchParams = useSearchParams();
+  const scope = searchParams.get("scope");
+
+  function modeHref(mode: Mode) {
+    const params = new URLSearchParams();
+    params.set("mode", mode);
+    if (scope) params.set("scope", scope);
+    return `/dashboard?${params.toString()}`;
+  }
+
   return (
     <div
       role="group"
@@ -28,7 +39,7 @@ export default function ModeSelector({ current }: ModeSelectorProps) {
         return (
           <Link
             key={mode}
-            href={`/dashboard?mode=${mode}`}
+            href={modeHref(mode)}
             aria-current={active ? "true" : undefined}
             className={`rounded px-3 py-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
               active
