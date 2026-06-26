@@ -43,67 +43,65 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
   .post(
     "/start",
     async ({ body, request, status }) => {
-      const s = await auth.api.getSession({ headers: request.headers });
-      if (!s) return status(401);
+      try {
+        const s = await auth.api.getSession({ headers: request.headers });
+        if (!s) return status(401);
 
-      const userId = s.user.id;
+        const userId = s.user.id;
 
-      // Prevent concurrent sync jobs for the same user — avoids GitHub rate-limit exhaustion.
-      const [running] = await db
-        .select({ id: syncJob.id })
-        .from(syncJob)
-        .where(and(eq(syncJob.userId, userId), eq(syncJob.status, "running")))
-        .limit(1);
+        // Prevent concurrent sync jobs for the same user — avoids GitHub rate-limit exhaustion.
+        const [running] = await db
+          .select({ id: syncJob.id })
+          .from(syncJob)
+          .where(and(eq(syncJob.userId, userId), eq(syncJob.status, "running")))
+          .limit(1);
 
-      if (running) {
-        return status(409, { error: "Sync já em andamento." });
+        if (running) {
+          return status(409, { error: "Sync já em andamento." });
+        }
+
+        // Require PAT
+        const [secret] = await db
+          .select()
+          .from(userSecret)
+          .where(eq(userSecret.userId, userId))
+          .limit(1);
+
+        if (!secret?.githubPatEnc) {
+          return status(409, {
+            error: "GitHub PAT not configured. Add your token in Settings first.",
+          });
+        }
+
+        const pat = appCrypto.decrypt(secret.githubPatEnc);
+
+        // Validate PAT + get GitHub login
+        const ghUser = await fetchGitHubUser(pat);
+
+        // Persist githubId/githubLogin on the user record if not set
+        const [currentUser] = await db
+          .select({ githubLogin: user.githubLogin })
+          .from(user)
+          .where(eq(user.id, userId))
+          .limit(1);
+
+        if (!currentUser?.githubLogin) {
+          await db
+            .update(user)
+            .set({ githubId: ghUser.id, githubLogin: ghUser.login })
+            .where(eq(user.id, userId));
+        }
+
+        const jobId = await startSyncJob(db, userId, body.mode);
+        const octokit = createOctokit(pat);
+
+        const { done } = await runBackfillBatch(db, octokit, jobId, ghUser.login);
+        return { jobId, done };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error("[sync/start] error:", message, err);
+        return status(500, { error: message });
       }
-
-      // Require PAT
-      const [secret] = await db
-        .select()
-        .from(userSecret)
-        .where(eq(userSecret.userId, userId))
-        .limit(1);
-
-      if (!secret?.githubPatEnc) {
-        return status(409, {
-          error:
-            "GitHub PAT not configured. Add your token in Settings first.",
-        });
-      }
-
-      const pat = appCrypto.decrypt(secret.githubPatEnc);
-
-      // Validate PAT + get GitHub login
-      const ghUser = await fetchGitHubUser(pat);
-
-      // Persist githubId/githubLogin on the user record if not set
-      const [currentUser] = await db
-        .select({ githubLogin: user.githubLogin })
-        .from(user)
-        .where(eq(user.id, userId))
-        .limit(1);
-
-      if (!currentUser?.githubLogin) {
-        await db
-          .update(user)
-          .set({ githubId: ghUser.id, githubLogin: ghUser.login })
-          .where(eq(user.id, userId));
-      }
-
-      const jobId = await startSyncJob(db, userId, body.mode);
-      const octokit = createOctokit(pat);
-
-      // Run the first batch synchronously so the client gets immediate progress.
-      const { done } = await runBackfillBatch(
-        db,
-        octokit,
-        jobId,
-        ghUser.login,
-      );
-
-      return { jobId, done };
     },
     {
       body: t.Object({
@@ -170,14 +168,19 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
       if (!u?.githubLogin) return status(409, { error: "GitHub login not set" });
 
       const octokit = createOctokit(pat);
-      const { done } = await runBackfillBatch(
-        db,
-        octokit,
-        params.jobId,
-        u.githubLogin,
-      );
-
-      return { done };
+      try {
+        const { done } = await runBackfillBatch(
+          db,
+          octokit,
+          params.jobId,
+          u.githubLogin,
+        );
+        return { done };
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error("[sync/batch] runBackfillBatch failed:", message, err);
+        return status(500, { error: message });
+      }
     },
     {
       params: t.Object({ jobId: t.String() }),

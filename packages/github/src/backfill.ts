@@ -416,35 +416,43 @@ export async function runBackfillBatch(
         continue;
       }
 
-      if (cursor.phase === "commits") {
-        const { count, hasMore, deltaBytes } = await ingestCommitsPage(
-          db, octokit, userId, repoId,
-          meta.owner, meta.name, userLogin,
-          cursor.page, cursor.since,
-        );
-        totalCommits += count;
-        if (deltaBytes > 0) await addUsage(db, userId, deltaBytes);
+      try {
+        if (cursor.phase === "commits") {
+          const { count, hasMore, deltaBytes } = await ingestCommitsPage(
+            db, octokit, userId, repoId,
+            meta.owner, meta.name, userLogin,
+            cursor.page, cursor.since,
+          );
+          totalCommits += count;
+          if (deltaBytes > 0) await addUsage(db, userId, deltaBytes);
 
-        if (hasMore) {
-          cursor = { ...cursor, page: cursor.page + 1 };
+          if (hasMore) {
+            cursor = { ...cursor, page: cursor.page + 1 };
+          } else {
+            reposDone += 1;
+            cursor = { ...cursor, repoIndex: cursor.repoIndex + 1, page: 1 };
+          }
         } else {
-          reposDone += 1;
-          cursor = { ...cursor, repoIndex: cursor.repoIndex + 1, page: 1 };
-        }
-      } else {
-        const { count, hasMore, deltaBytes } = await ingestPrsPage(
-          db, octokit, userId, repoId,
-          meta.owner, meta.name, userLogin,
-          cursor.page, cursor.since,
-        );
-        totalPrs += count;
-        if (deltaBytes > 0) await addUsage(db, userId, deltaBytes);
+          const { count, hasMore, deltaBytes } = await ingestPrsPage(
+            db, octokit, userId, repoId,
+            meta.owner, meta.name, userLogin,
+            cursor.page, cursor.since,
+          );
+          totalPrs += count;
+          if (deltaBytes > 0) await addUsage(db, userId, deltaBytes);
 
-        if (hasMore) {
-          cursor = { ...cursor, page: cursor.page + 1 };
-        } else {
-          cursor = { ...cursor, repoIndex: cursor.repoIndex + 1, page: 1 };
+          if (hasMore) {
+            cursor = { ...cursor, page: cursor.page + 1 };
+          } else {
+            cursor = { ...cursor, repoIndex: cursor.repoIndex + 1, page: 1 };
+          }
         }
+      } catch (repoErr) {
+        // Skip repos that are inaccessible (renamed, deleted, permission revoked).
+        // Log and advance to the next repo rather than failing the entire job.
+        const msg = repoErr instanceof Error ? repoErr.message : String(repoErr);
+        console.warn(`[backfill] skipping ${meta.owner}/${meta.name} (page ${cursor.page}):`, msg);
+        cursor = { ...cursor, repoIndex: cursor.repoIndex + 1, page: 1 };
       }
 
       pagesProcessed++;

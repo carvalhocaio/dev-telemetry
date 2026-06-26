@@ -41,8 +41,8 @@ export default function SyncButton() {
         jobId = current.id;
         done = current.status !== "running";
       } else if (!startRes.ok) {
-        const body = await startRes.json().catch(() => ({})) as { error?: string };
-        throw new Error(body.error ?? `sync/start returned ${startRes.status}`);
+        const body = await startRes.json().catch(() => ({})) as { error?: string; message?: string };
+        throw new Error(body.error ?? body.message ?? `sync/start returned ${startRes.status}`);
       } else {
         ({ jobId, done } = (await startRes.json()) as { jobId: string; done: boolean });
       }
@@ -53,7 +53,10 @@ export default function SyncButton() {
           method: "POST",
           credentials: "include",
         });
-        if (!batchRes.ok) break;
+        if (!batchRes.ok) {
+          const body = await batchRes.json().catch(() => ({})) as { error?: string; message?: string };
+          throw new Error(body.error ?? body.message ?? `sync/batch returned ${batchRes.status}`);
+        }
         ({ done } = (await batchRes.json()) as { done: boolean });
         batches++;
       }
