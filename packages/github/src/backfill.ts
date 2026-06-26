@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import type { Database } from "@dev-telemetry/db/client";
 import {
   commit,
@@ -195,6 +195,26 @@ async function discoverRepos(
 }
 
 // ---------------------------------------------------------------------------
+// Concurrency helper
+// ---------------------------------------------------------------------------
+
+async function pLimit<T>(
+  tasks: (() => Promise<T>)[],
+  concurrency: number,
+): Promise<T[]> {
+  const results: T[] = [];
+  let i = 0;
+  async function worker() {
+    while (i < tasks.length) {
+      const idx = i++;
+      results[idx] = await tasks[idx]!();
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(concurrency, tasks.length) }, worker));
+  return results;
+}
+
+// ---------------------------------------------------------------------------
 // Phase 2: ingest commits (one page)
 // ---------------------------------------------------------------------------
 
@@ -220,22 +240,58 @@ async function ingestCommitsPage(
 
   const hasMore = resp.headers.link?.includes('rel="next"') ?? false;
 
-  const rows = resp.data
-    .filter((c) => c.author?.login === userLogin && c.commit.author?.date)
-    .map((c) => {
-      const message = capCommitMessage(c.commit.message);
-      return {
-        userId,
-        repoId,
-        sha: c.sha,
-        message,
-        authoredAt: new Date(c.commit.author!.date!),
-        additions: c.stats?.additions ?? 0,
-        deletions: c.stats?.deletions ?? 0,
-        changedFiles: c.files?.length ?? 0,
-        htmlUrl: c.html_url,
-      };
-    });
+  const candidates = resp.data.filter(
+    (c) => c.author?.login === userLogin && c.commit.author?.date,
+  );
+
+  if (candidates.length === 0) {
+    return { count: 0, hasMore, deltaBytes: 0 };
+  }
+
+  // Identify commits already in the DB so we only fetch stats for new ones.
+  const knownShas = new Set(
+    (
+      await db
+        .select({ sha: commit.sha })
+        .from(commit)
+        .where(and(eq(commit.userId, userId), inArray(commit.sha, candidates.map((c) => c.sha))))
+    ).map((r) => r.sha),
+  );
+
+  const newCandidates = candidates.filter((c) => !knownShas.has(c.sha));
+
+  // Fetch individual stats for new commits only (listCommits never returns stats).
+  const statsMap = new Map<string, { additions: number; deletions: number; changedFiles: number }>();
+  await pLimit(
+    newCandidates.map((c) => async () => {
+      try {
+        const detail = await octokit.rest.repos.getCommit({ owner, repo: repoName, ref: c.sha });
+        statsMap.set(c.sha, {
+          additions: detail.data.stats?.additions ?? 0,
+          deletions: detail.data.stats?.deletions ?? 0,
+          changedFiles: detail.data.files?.length ?? 0,
+        });
+      } catch {
+        statsMap.set(c.sha, { additions: 0, deletions: 0, changedFiles: 0 });
+      }
+    }),
+    5,
+  );
+
+  const rows = newCandidates.map((c) => {
+    const stats = statsMap.get(c.sha) ?? { additions: 0, deletions: 0, changedFiles: 0 };
+    return {
+      userId,
+      repoId,
+      sha: c.sha,
+      message: capCommitMessage(c.commit.message),
+      authoredAt: new Date(c.commit.author!.date!),
+      additions: stats.additions,
+      deletions: stats.deletions,
+      changedFiles: stats.changedFiles,
+      htmlUrl: c.html_url,
+    };
+  });
 
   if (rows.length > 0) {
     await db
@@ -245,7 +301,7 @@ async function ingestCommitsPage(
   }
 
   const deltaBytes = rows.reduce((sum, r) => sum + estimateCommitBytes(r.message), 0);
-  return { count: rows.length, hasMore, deltaBytes };
+  return { count: candidates.length, hasMore, deltaBytes };
 }
 
 // ---------------------------------------------------------------------------
@@ -281,8 +337,47 @@ async function ingestPrsPage(
       (!since || new Date(pr.created_at) >= new Date(since)),
   );
 
-  const rows = userPrs.map((pr) => {
+  // Identify PRs already in the DB so we only fetch stats for new ones.
+  const knownNumbers = new Set(
+    userPrs.length > 0
+      ? (
+          await db
+            .select({ number: pullRequest.number })
+            .from(pullRequest)
+            .where(
+              and(
+                eq(pullRequest.userId, userId),
+                eq(pullRequest.repoId, repoId),
+                inArray(pullRequest.number, userPrs.map((pr) => pr.number)),
+              ),
+            )
+        ).map((r) => r.number)
+      : [],
+  );
+
+  const newPrs = userPrs.filter((pr) => !knownNumbers.has(pr.number));
+
+  // Fetch individual PR stats for new PRs (list endpoint omits additions/deletions).
+  const prStatsMap = new Map<number, { additions: number; deletions: number; changedFiles: number }>();
+  await pLimit(
+    newPrs.map((pr) => async () => {
+      try {
+        const detail = await octokit.rest.pulls.get({ owner, repo: repoName, pull_number: pr.number });
+        prStatsMap.set(pr.number, {
+          additions: detail.data.additions,
+          deletions: detail.data.deletions,
+          changedFiles: detail.data.changed_files,
+        });
+      } catch {
+        prStatsMap.set(pr.number, { additions: 0, deletions: 0, changedFiles: 0 });
+      }
+    }),
+    5,
+  );
+
+  const rows = newPrs.map((pr) => {
     const body = pr.body ? capPrBody(pr.body) : null;
+    const stats = prStatsMap.get(pr.number) ?? { additions: 0, deletions: 0, changedFiles: 0 };
     return {
       userId,
       repoId,
@@ -292,10 +387,9 @@ async function ingestPrsPage(
       state: pr.state,
       ghCreatedAt: new Date(pr.created_at),
       ghMergedAt: pr.merged_at ? new Date(pr.merged_at) : null,
-      // stats not available from the list endpoint — default to 0
-      additions: 0,
-      deletions: 0,
-      changedFiles: 0,
+      additions: stats.additions,
+      deletions: stats.deletions,
+      changedFiles: stats.changedFiles,
       htmlUrl: pr.html_url,
     };
   });
