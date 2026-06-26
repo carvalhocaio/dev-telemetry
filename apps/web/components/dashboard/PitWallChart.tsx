@@ -35,10 +35,10 @@ const AXIS_FILL = "#5a5a7a";
 const LINE_COLOR = "#1e1e1e";
 
 function levelColor(composite: number): string {
-  if (composite >= 0.9) return "#a855f7"; // muito_acima
-  if (composite >= 0.8) return "#f97316"; // acima
-  if (composite >= 0.5) return "#00ff41"; // atendendo
-  return "#f59e0b";                       // abaixo
+  if (composite >= 0.9) return "#a855f7"; // muito_acima (roxo)
+  if (composite >= 0.8) return "#00ff41"; // acima (verde)
+  if (composite >= 0.5) return "#5a5a7a"; // atendendo (cinza)
+  return "#f59e0b";                       // abaixo (amarelo)
 }
 
 const MONTHS_PT = [
