@@ -164,10 +164,10 @@ O classificador usa **percentis auto-referentes** — cada período é comparado
 ### Cortes de nível (percentis)
 | Nível        | Intervalo de composite score |
 |--------------|------------------------------|
-| `abaixo`     | < 0.20                       |
-| `atendendo`  | 0.20 – 0.70                  |
-| `acima`      | 0.70 – 0.90                  |
-| `muito_acima`| ≥ 0.90                       |
+| `abaixo`     | 0.00 – 0.49                       |
+| `atendendo`  | 0.50 – 0.79                  |
+| `acima`      | 0.80 – 0.89                  |
+| `muito_acima`| 0.90 – 1.00                       |
 
 Os cortes são **assimétricos por design**: a banda `atendendo` é larga (50 pontos percentuais) porque a maioria dos períodos de um profissional consistente deve cair aqui. Isso evita que o sistema infle artificialmente os níveis superiores.
 

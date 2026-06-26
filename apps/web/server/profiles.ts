@@ -46,6 +46,7 @@ export const profilesRoutes = new Elysia({ prefix: "/me" })
     return {
       profileKey: key,
       ...labelFor(key),
+      content,
       contentPreview: content.slice(0, 200),
       // Full custom content returned to the owner so the textarea can be pre-filled correctly.
       customContent: key === "custom" ? (row?.customContent ?? null) : null,

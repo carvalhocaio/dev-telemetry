@@ -133,10 +133,10 @@ O classificador usa **percentis auto-referentes** — cada período é comparado
 
 | Nível        | Composite score |
 |--------------|-----------------|
-| `abaixo`     | < 0.20          |
-| `atendendo`  | 0.20 – 0.70     |
-| `acima`      | 0.70 – 0.90     |
-| `muito_acima`| ≥ 0.90          |
+| `abaixo`     | 0.00 – 0.49          |
+| `atendendo`  | 0.50 – 0.79     |
+| `acima`      | 0.80 – 0.89     |
+| `muito_acima`| 0.90 – 1.00          |
 
 ### Limitações conhecidas (críticas para seniores)
 - Mede **atividade no GitHub** — arquitetura, mentoria, decisões e incident response não aparecem.
