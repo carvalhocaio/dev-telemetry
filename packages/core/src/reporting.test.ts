@@ -12,6 +12,7 @@ function metrics(overrides: Partial<PeriodMetrics> & { period: string }): Period
     activeDays: 0,
     prCount: 0,
     prMerged: 0,
+    prOpen: 0,
     ...overrides,
   };
 }

@@ -12,6 +12,7 @@ function period(date: string): PeriodReport {
     commitCount: 1,
     prCount: 0,
     prMerged: 0,
+    prOpen: 0,
     additions: 10,
     deletions: 2,
     activeDays: 1,

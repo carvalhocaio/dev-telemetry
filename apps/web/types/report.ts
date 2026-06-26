@@ -75,6 +75,7 @@ export interface WindowSummary {
   commitCount: number;
   prCount: number;
   prMerged: number;
+  prOpen: number;
   additions: number;
   deletions: number;
   activeDays: number;
@@ -92,6 +93,7 @@ export interface PeriodReport {
   commitCount: number;
   prCount: number;
   prMerged: number;
+  prOpen: number;
   additions: number;
   deletions: number;
   activeDays: number;

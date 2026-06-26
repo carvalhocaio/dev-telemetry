@@ -38,7 +38,7 @@ function Stat({ label, value, hint }: StatProps) {
 
 const METRICS = {
   commits: "Total de commits no período selecionado.",
-  prs: "PRs mesclados em relação ao total de PRs abertos no período.",
+  prs: "PRs abertos / PRs mergeados no período.",
   churn: "Linhas adicionadas + removidas. Indica o volume de mudanças no código.",
   diasAtivos: "Dias com pelo menos um commit registrado no período.",
 } as const;
@@ -52,7 +52,7 @@ export default function MetricsRow({ window }: MetricsRowProps) {
   return (
     <dl className="grid grid-cols-4 gap-4 border-t border-border pt-4">
       <Stat label="Commits" value={window.commitCount.toLocaleString("pt-BR")} hint={METRICS.commits} />
-      <Stat label="PRs" value={`${window.prMerged}/${window.prCount}`} hint={METRICS.prs} />
+      <Stat label="PRs" value={`${window.prOpen}/${window.prMerged}`} hint={METRICS.prs} />
       <Stat label="Churn" value={churn.toLocaleString("pt-BR")} hint={METRICS.churn} />
       <Stat label="Dias ativos" value={String(window.activeDays)} hint={METRICS.diasAtivos} />
     </dl>
