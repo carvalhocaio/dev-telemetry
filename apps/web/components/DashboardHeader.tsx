@@ -60,7 +60,7 @@ export default function DashboardHeader() {
 
   async function handleSignOut() {
     await signOut();
-    router.replace("/login");
+    window.location.href = "/login";
   }
 
   return (
