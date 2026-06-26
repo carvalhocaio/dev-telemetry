@@ -20,6 +20,20 @@ function labelFor(key: string): { label: string; group: string } {
 }
 
 /**
+ * GET /api/profiles/:key — public content preview for any built-in profile key.
+ * No auth required — content is not user-specific.
+ */
+export const publicProfileRoutes = new Elysia({ prefix: "/profiles" }).get(
+  "/:key",
+  ({ params, status }) => {
+    const content = PROFILE_REGISTRY[params.key];
+    if (!content) return status(404, { error: "perfil não encontrado" });
+    const meta = PROFILE_METADATA.find((p) => p.key === params.key);
+    return { key: params.key, label: meta?.label ?? params.key, group: meta?.group ?? "", content };
+  },
+);
+
+/**
  * Elysia plugin: user profile routes under /me.
  *
  * GET /api/me/profile  — current profile key + label + content preview (200 chars)

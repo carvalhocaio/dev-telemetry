@@ -1,12 +1,14 @@
 "use client";
 
-import { ArrowRight, Check, Loader2 } from "lucide-react";
+import { ArrowRight, Check, Clipboard, ClipboardCheck, Eye, Loader2, X } from "lucide-react";
 import CustomSelect from "@/components/CustomSelect";
 import type { SelectOption } from "@/components/CustomSelect";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { useSession } from "@/lib/auth-client";
 
 const QUOTA_BYTES = 3 * 1024 * 1024 * 1024;
@@ -20,15 +22,15 @@ const DEFAULT_MODELS: Record<LlmProvider, string> = {
 };
 
 const PROFILE_METADATA = [
-  { key: "data_engineer_jr", group: "Eng. de Dados", label: "Júnior" },
-  { key: "data_engineer_pleno", group: "Eng. de Dados", label: "Pleno" },
-  { key: "data_engineer_sr", group: "Eng. de Dados", label: "Sênior" },
-  { key: "software_engineer_estagio", group: "Eng. de Software", label: "Estágio" },
-  { key: "software_engineer_jr", group: "Eng. de Software", label: "Júnior" },
-  { key: "software_engineer_pleno", group: "Eng. de Software", label: "Pleno" },
-  { key: "software_engineer_sr", group: "Eng. de Software", label: "Sênior" },
-  { key: "student_dados", group: "Estudante", label: "Foco em Dados" },
-  { key: "student_software", group: "Estudante", label: "Foco em Software" },
+  { key: "data_engineer_jr",          group: "Eng. de Dados",    fullLabel: "Engenheiro de Dados — Júnior" },
+  { key: "data_engineer_pleno",       group: "Eng. de Dados",    fullLabel: "Engenheiro de Dados — Pleno" },
+  { key: "data_engineer_sr",          group: "Eng. de Dados",    fullLabel: "Engenheiro de Dados — Sênior" },
+  { key: "software_engineer_estagio", group: "Eng. de Software", fullLabel: "Engenheiro de Software — Estágio" },
+  { key: "software_engineer_jr",      group: "Eng. de Software", fullLabel: "Engenheiro de Software — Júnior" },
+  { key: "software_engineer_pleno",   group: "Eng. de Software", fullLabel: "Engenheiro de Software — Pleno" },
+  { key: "software_engineer_sr",      group: "Eng. de Software", fullLabel: "Engenheiro de Software — Sênior" },
+  { key: "student_dados",             group: "Estudante",        fullLabel: "Estudante — Foco em Dados" },
+  { key: "student_software",          group: "Estudante",        fullLabel: "Estudante — Foco em Software" },
 ] as const;
 
 const BUILT_IN_KEYS: readonly string[] = PROFILE_METADATA.map((p) => p.key);
@@ -104,6 +106,13 @@ export default function SettingsPage() {
   const [profileSaved, setProfileSaved] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
 
+  // Profile preview modal
+  const [previewContent, setPreviewContent] = useState<string | null>(null);
+  const [previewLabel, setPreviewLabel] = useState<string>("");
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [copied, setCopied] = useState(false);
+
   // Sync scopes form
   const [availableOrgs, setAvailableOrgs] = useState<{ login: string }[]>([]);
   const [selectedScopes, setSelectedScopes] = useState<string[] | null>(null);
@@ -151,7 +160,8 @@ export default function SettingsPage() {
       }
       if (profileResult.status === "fulfilled") {
         const profile = profileResult.value;
-        setConfig((prev) => prev ? { ...prev, profileKey: profile.profileKey, profileLabel: profile.label } : prev);
+        const meta = PROFILE_METADATA.find((p) => p.key === profile.profileKey);
+        setConfig((prev) => prev ? { ...prev, profileKey: profile.profileKey, profileLabel: meta?.fullLabel ?? profile.label } : prev);
         if (BUILT_IN_KEYS.includes(profile.profileKey)) {
           setSelectedKey(profile.profileKey);
         } else {
@@ -310,6 +320,22 @@ export default function SettingsPage() {
     }
   }
 
+  async function previewProfile() {
+    if (selectedKey === "custom") return;
+    setPreviewLoading(true);
+    try {
+      const res = await fetch(`/api/profiles/${selectedKey}`, { credentials: "include" });
+      if (!res.ok) return;
+      const data = (await res.json()) as { content: string; label: string; group: string };
+      const meta = PROFILE_METADATA.find((p) => p.key === selectedKey);
+      setPreviewLabel(meta?.fullLabel ?? `${data.group} — ${data.label}`);
+      setPreviewContent(data.content);
+      setPreviewOpen(true);
+    } finally {
+      setPreviewLoading(false);
+    }
+  }
+
   async function saveProfile() {
     const isCustom = selectedKey === "custom";
     if (isCustom && !customProfileContent.trim()) return;
@@ -332,7 +358,7 @@ export default function SettingsPage() {
       // Derive label from local metadata — PUT returns { ok: true }, not a ProfileResponse.
       const savedKey = isCustom ? "custom" : selectedKey;
       const savedMeta = PROFILE_METADATA.find((p) => p.key === savedKey);
-      const savedLabel = savedMeta ? `${savedMeta.label} — ${savedMeta.group}` : null;
+      const savedLabel = savedMeta?.fullLabel ?? null;
       setConfig((prev) =>
         prev ? { ...prev, profileKey: savedKey, profileLabel: savedLabel } : prev,
       );
@@ -378,11 +404,10 @@ export default function SettingsPage() {
   const usedPct = Math.min((bytesUsed / QUOTA_BYTES) * 100, 100).toFixed(1);
 
   const activeProfileMeta = PROFILE_METADATA.find((p) => p.key === config?.profileKey);
-  const activeProfileLabel = activeProfileMeta
-    ? `${activeProfileMeta.label} — ${activeProfileMeta.group}`
-    : config?.profileLabel ?? null;
+  const activeProfileLabel = activeProfileMeta?.fullLabel ?? config?.profileLabel ?? null;
 
   return (
+    <>
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-8 sm:px-6">
       {/* heading */}
       <div className="border-b border-border pb-4">
@@ -551,7 +576,7 @@ export default function SettingsPage() {
           onChange={setSelectedKey}
           className="w-full"
           options={[
-            ...PROFILE_METADATA.map((p) => ({ value: p.key, label: p.label, group: p.group })),
+            ...PROFILE_METADATA.map((p) => ({ value: p.key, label: p.fullLabel })),
             { value: "custom", label: "Perfil personalizado" },
           ]}
         />
@@ -572,15 +597,29 @@ export default function SettingsPage() {
           </div>
         )}
 
-        <button
-          type="button"
-          onClick={saveProfile}
-          disabled={profileSaving || (selectedKey === "custom" && !customProfileContent.trim())}
-          className="inline-flex cursor-pointer items-center gap-1.5 rounded border border-accent bg-accent/10 px-3 py-2 font-mono text-xs text-accent transition-colors hover:bg-accent/20 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {profileSaving ? <Loader2 size={12} className="animate-spin" /> : profileSaved ? <Check size={12} /> : null}
-          {profileSaved ? "salvo" : "salvar perfil"}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={saveProfile}
+            disabled={profileSaving || (selectedKey === "custom" && !customProfileContent.trim())}
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded border border-accent bg-accent/10 px-3 py-2 font-mono text-xs text-accent transition-colors hover:bg-accent/20 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {profileSaving ? <Loader2 size={12} className="animate-spin" /> : profileSaved ? <Check size={12} /> : null}
+            {profileSaved ? "salvo" : "salvar perfil"}
+          </button>
+          {selectedKey !== "custom" && (
+            <button
+              type="button"
+              onClick={previewProfile}
+              disabled={previewLoading}
+              title="Visualizar instruções do perfil"
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded border border-border bg-surface/40 px-3 py-2 font-mono text-xs text-muted transition-colors hover:border-accent hover:text-accent disabled:opacity-50"
+            >
+              {previewLoading ? <Loader2 size={12} className="animate-spin" /> : <Eye size={12} />}
+              visualizar
+            </button>
+          )}
+        </div>
         {profileError && (
           <p className="font-mono text-xs text-alert">{profileError}</p>
         )}
@@ -693,5 +732,51 @@ export default function SettingsPage() {
         )}
       </section>
     </main>
+
+      {previewOpen && previewContent && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+          onClick={() => setPreviewOpen(false)}
+        >
+          <div
+            className="relative max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-md border border-border bg-background p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <span className="font-mono text-xs uppercase tracking-widest text-accent">
+                {previewLabel}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(previewContent ?? "");
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }}
+                  title="Copiar markdown"
+                  aria-label="Copiar markdown"
+                  className="flex items-center gap-1 font-mono text-[10px] text-muted transition-colors hover:text-accent"
+                >
+                  {copied ? <ClipboardCheck size={13} className="text-accent" /> : <Clipboard size={13} />}
+                  {copied ? "copiado" : "copiar markdown"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewOpen(false)}
+                  aria-label="Fechar"
+                  className="text-muted transition-colors hover:text-foreground"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            </div>
+            <div className="font-mono text-xs leading-relaxed text-muted [&_h1]:mb-3 [&_h1]:font-bold [&_h1]:uppercase [&_h1]:tracking-widest [&_h1]:text-foreground [&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:font-bold [&_h2]:uppercase [&_h2]:tracking-wider [&_h2]:text-foreground [&_h3]:mb-1 [&_h3]:mt-3 [&_h3]:font-semibold [&_h3]:text-foreground [&_li]:ml-4 [&_li]:list-disc [&_p]:mb-2 [&_strong]:text-foreground [&_table]:mb-3 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-border [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:border-border [&_th]:px-2 [&_th]:py-1 [&_th]:text-left [&_th]:text-foreground [&_ul]:mb-2">
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>{previewContent}</ReactMarkdown>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
