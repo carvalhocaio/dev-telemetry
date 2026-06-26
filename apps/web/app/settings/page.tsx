@@ -641,16 +641,13 @@ export default function SettingsPage() {
       <section className="space-y-2 border-t border-border pt-6">
         <h2 className="font-mono text-xs uppercase tracking-wider text-muted">Armazenamento</h2>
         <div className="rounded border border-border bg-surface p-4 font-mono text-xs space-y-1">
-          <div className="flex w-full items-center gap-1 text-muted">
+          <div className="flex w-full items-center gap-2 text-muted">
             <span>[</span>
-            <div className="relative flex-1 overflow-hidden leading-none">
-              <span className="block text-foreground/8">{"░".repeat(80)}</span>
+            <div className="relative h-1.5 flex-1 overflow-hidden rounded-sm bg-border/20">
               <div
-                className="absolute inset-0 overflow-hidden text-accent"
+                className="absolute inset-y-0 left-0 bg-accent transition-all"
                 style={{ width: `${usedPct}%` }}
-              >
-                {"█".repeat(80)}
-              </div>
+              />
             </div>
             <span>]</span>
             <span className="ml-1 text-foreground">{usedPct}%</span>
@@ -670,18 +667,15 @@ export default function SettingsPage() {
           <div className="rounded border border-border bg-surface p-4 font-mono text-xs space-y-1">
             {syncJob.status === "running" || syncing ? (
               <>
-                <div className="flex w-full items-center gap-1 text-muted">
+                <div className="flex w-full items-center gap-2 text-muted">
                   <span>[</span>
-                  <div className="relative flex-1 overflow-hidden leading-none">
-                    <span className="block text-foreground/8">{"░".repeat(80)}</span>
+                  <div className="relative h-1.5 flex-1 overflow-hidden rounded-sm bg-border/20">
                     <div
-                      className="absolute inset-0 overflow-hidden text-accent"
+                      className="absolute inset-y-0 left-0 bg-accent transition-all"
                       style={{
                         width: `${syncJob.reposTotal > 0 ? Math.min((syncJob.reposDone / syncJob.reposTotal) * 100, 100).toFixed(1) : 0}%`,
                       }}
-                    >
-                      {"█".repeat(80)}
-                    </div>
+                    />
                   </div>
                   <span>]</span>
                   <span className="ml-1 shrink-0 text-foreground">
