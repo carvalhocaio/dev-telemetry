@@ -644,7 +644,7 @@ export default function SettingsPage() {
           <div className="flex w-full items-center gap-1 text-muted">
             <span>[</span>
             <div className="relative flex-1 overflow-hidden leading-none">
-              <span className="block text-muted/30">{"░".repeat(80)}</span>
+              <span className="block text-foreground/8">{"░".repeat(80)}</span>
               <div
                 className="absolute inset-0 overflow-hidden text-accent"
                 style={{ width: `${usedPct}%` }}
@@ -673,7 +673,7 @@ export default function SettingsPage() {
                 <div className="flex w-full items-center gap-1 text-muted">
                   <span>[</span>
                   <div className="relative flex-1 overflow-hidden leading-none">
-                    <span className="block text-muted/30">{"░".repeat(80)}</span>
+                    <span className="block text-foreground/8">{"░".repeat(80)}</span>
                     <div
                       className="absolute inset-0 overflow-hidden text-accent"
                       style={{
