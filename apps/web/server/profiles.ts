@@ -13,6 +13,7 @@ import {
 const DEFAULT_KEY = "data_engineer_pleno";
 
 function labelFor(key: string): { label: string; group: string } {
+  if (key === "custom") return { label: "Personalizado", group: "" };
   const meta = PROFILE_METADATA.find((p) => p.key === key);
   return meta
     ? { label: meta.label, group: meta.group }

@@ -343,7 +343,7 @@ export default function SettingsPage() {
     setProfileError(null);
     try {
       const body = isCustom
-        ? { customContent: customProfileContent }
+        ? { profileKey: "custom", customContent: customProfileContent }
         : { profileKey: selectedKey };
       const res = await fetch("/api/me/profile", {
         method: "PUT",
