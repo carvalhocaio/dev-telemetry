@@ -7,8 +7,6 @@ const FEATURES = [
   "sync de commits e PRs direto do GitHub via PAT",
   "narrativa de produtividade com LLM multi-provider (gemini · openai · anthropic)",
   "classificador por percentil contra perfis de mercado",
-  "filtros por organização e escopo pessoal",
-  "self-hostable — seus dados ficam no seu deploy",
 ] as const;
 
 const DEMO_LINES = [
@@ -26,20 +24,32 @@ export default async function LandingPage() {
   const session = await auth.api.getSession({ headers: await headers() });
 
   return (
-    <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-16 px-6 py-16">
-      {/* breadcrumb / eyebrow */}
-      <p className="font-mono text-xs text-muted">
-        <span className="text-accent">~/</span> dev-telemetry
-      </p>
+    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-16 px-6 py-16">
+      {/* hero — title + subtitle left, CTA right */}
+      <section className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="font-display text-6xl font-bold tracking-tight text-foreground">
+            <span className="text-accent">$</span> dev-telemetry
+          </h1>
+          <p className="mt-3 font-mono text-sm text-muted">
+            telemetria para devs — commits, PRs e narrativa IA em tempo real
+          </p>
+        </div>
 
-      {/* hero */}
-      <section>
-        <h1 className="font-display text-6xl font-bold tracking-tight text-foreground">
-          <span className="text-accent">$</span> dev-telemetry
-        </h1>
-        <p className="mt-3 max-w-lg font-mono text-sm text-muted">
-          telemetria para devs — commits, PRs e narrativa IA em tempo real
-        </p>
+        <div className="flex flex-col gap-3 sm:min-w-[260px] sm:pt-2">
+          <Link
+            href={session ? "/dashboard" : "/login"}
+            className="flex items-center justify-center border border-accent bg-transparent px-6 py-4 font-mono text-sm text-accent transition-colors hover:bg-accent hover:text-background"
+          >
+            {session ? "IR PARA O PAINEL →" : "CONECTAR VIA GITHUB →"}
+          </Link>
+          <Link
+            href="/contributions"
+            className="text-center font-mono text-xs text-muted transition-colors hover:text-accent"
+          >
+            <span className="text-accent">$</span> contribuir para o projeto
+          </Link>
+        </div>
       </section>
 
       {/* terminal demo block */}
@@ -53,10 +63,6 @@ export default async function LandingPage() {
             {line}
           </p>
         ))}
-        <p className="mt-4">
-          <span className="text-accent">$</span>
-          <span className="animate-pulse text-muted"> _</span>
-        </p>
       </div>
 
       {/* feature grid */}
@@ -74,22 +80,6 @@ export default async function LandingPage() {
             </div>
           ))}
         </div>
-      </section>
-
-      {/* CTA */}
-      <section className="flex max-w-sm flex-col gap-3">
-        <Link
-          href={session ? "/dashboard" : "/login"}
-          className="flex items-center justify-center gap-3 border border-accent bg-transparent px-6 py-4 font-mono text-sm text-accent transition-colors hover:bg-accent hover:text-background"
-        >
-          {session ? "IR PARA O PAINEL →" : "CONECTAR VIA GITHUB →"}
-        </Link>
-        <Link
-          href="/contributions"
-          className="text-center font-mono text-xs text-muted transition-colors hover:text-accent"
-        >
-          <span className="text-accent">$</span> contribuir para o projeto
-        </Link>
       </section>
     </main>
   );
