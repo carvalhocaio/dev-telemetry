@@ -38,10 +38,10 @@ No mercado brasileiro de 2025–2026, o perfil de estagiário típico carrega:
 
 ## 3. Faixa de Bolsa-Auxílio de Referência (Brasil, 2025)
 
-| Nível         | Bolsa (mensal)        |
-|---------------|-----------------------|
+| Nível         | Bolsa (mensal)          |
+|---------------|-------------------------|
 | **Estágio**   | **R$ 1.200 – R$ 3.000** |
-| Júnior        | R$ 3.500 – R$ 6.500   |
+| Júnior        | R$ 3.500 – R$ 6.500     |
 
 > Fontes de referência: pesquisas de programas de estágio em tech (Nubank, iFood, Mercado Livre), Glassdoor Brasil. Bolsas variam bastante por porte da empresa e carga horária.
 
@@ -122,18 +122,18 @@ Os limites numéricos são determinados pelo classificador determinístico (perc
 
 O classificador usa **percentis auto-referentes** — cada período é comparado apenas contra o próprio histórico.
 
-| Componente      | Peso | Justificativa                                                  |
-|-----------------|------|----------------------------------------------------------------|
+| Componente      | Peso | Justificativa                                                 |
+|-----------------|------|---------------------------------------------------------------|
 | `throughput`    | 0.45 | Combinação de commits + PRs; proxy de atividade.              |
 | `active_days`   | 0.35 | Consistência temporal — o sinal mais relevante para estágio.  |
-| `churn`         | 0.20 | Linhas adicionadas + removidas; indicador secundário.          |
+| `churn`         | 0.20 | Linhas adicionadas + removidas; indicador secundário.         |
 
 | Nível        | Composite score |
 |--------------|-----------------|
-| `abaixo`     | 0.00 – 0.49          |
+| `abaixo`     | 0.00 – 0.49     |
 | `atendendo`  | 0.50 – 0.79     |
 | `acima`      | 0.80 – 0.89     |
-| `muito_acima`| 0.90 – 1.00          |
+| `muito_acima`| 0.90 – 1.00     |
 
 ### Limitações conhecidas
 - Mede **atividade no GitHub** — estudo, pareamento e aprendizado recebido não são capturados.

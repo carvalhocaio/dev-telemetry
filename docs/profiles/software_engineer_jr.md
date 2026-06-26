@@ -40,11 +40,11 @@ No mercado brasileiro de 2025–2026, o perfil júnior típico carrega:
 
 ## 3. Faixa Salarial de Referência (Brasil, 2025)
 
-| Nível         | CLT (mensal)          | PJ (mensal)           |
-|---------------|-----------------------|-----------------------|
+| Nível         | CLT (mensal)            | PJ (mensal)             |
+|---------------|-------------------------|-------------------------|
 | **Júnior**    | **R$ 3.500 – R$ 7.000** | **R$ 5.000 – R$ 9.000** |
-| Pleno         | R$ 8.000 – R$ 14.000  | R$ 11.000 – R$ 18.000 |
-| Sênior        | R$ 14.000 – R$ 24.000 | R$ 18.000 – R$ 32.000 |
+| Pleno         | R$ 8.000 – R$ 14.000    | R$ 11.000 – R$ 18.000   |
+| Sênior        | R$ 14.000 – R$ 24.000   | R$ 18.000 – R$ 32.000   |
 
 > Fontes de referência: Glassdoor Brasil, levels.fyi, pesquisas salariais de comunidades de tecnologia.
 
@@ -128,16 +128,16 @@ O classificador usa **percentis auto-referentes** — cada período é comparado
 
 | Componente      | Peso | Justificativa                                                  |
 |-----------------|------|----------------------------------------------------------------|
-| `throughput`    | 0.45 | Combinação de commits + PRs; melhor proxy de entrega real.    |
-| `active_days`   | 0.35 | Consistência temporal — muito relevante para juniores.        |
+| `throughput`    | 0.45 | Combinação de commits + PRs; melhor proxy de entrega real.     |
+| `active_days`   | 0.35 | Consistência temporal — muito relevante para juniores.         |
 | `churn`         | 0.20 | Linhas adicionadas + removidas; indicador secundário.          |
 
 | Nível        | Composite score |
 |--------------|-----------------|
-| `abaixo`     | 0.00 – 0.49          |
+| `abaixo`     | 0.00 – 0.49     |
 | `atendendo`  | 0.50 – 0.79     |
 | `acima`      | 0.80 – 0.89     |
-| `muito_acima`| 0.90 – 1.00          |
+| `muito_acima`| 0.90 – 1.00     |
 
 ### Limitações conhecidas
 - Mede **atividade no GitHub** — pareamento, reuniões e aprendizado recebido não são capturados.

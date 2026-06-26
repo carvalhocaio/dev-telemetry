@@ -39,11 +39,11 @@ No mercado brasileiro de 2025–2026, o perfil júnior típico carrega:
 
 ## 3. Faixa Salarial de Referência (Brasil, 2025)
 
-| Nível         | CLT (mensal)          | PJ (mensal)           |
-|---------------|-----------------------|-----------------------|
+| Nível         | CLT (mensal)            | PJ (mensal)             |
+|---------------|-------------------------|-------------------------|
 | **Júnior**    | **R$ 4.000 – R$ 7.000** | **R$ 5.000 – R$ 9.000** |
-| Pleno         | R$ 9.000 – R$ 15.000  | R$ 12.000 – R$ 20.000 |
-| Sênior        | R$ 15.000 – R$ 25.000 | R$ 20.000 – R$ 35.000 |
+| Pleno         | R$ 9.000 – R$ 15.000    | R$ 12.000 – R$ 20.000   |
+| Sênior        | R$ 15.000 – R$ 25.000   | R$ 20.000 – R$ 35.000   |
 
 > Fontes de referência: State of Data Brazil 2024, Glassdoor Brasil, levantamentos da comunidade Data Hackers.
 
@@ -128,16 +128,16 @@ O classificador usa **percentis auto-referentes** — cada período é comparado
 
 | Componente      | Peso | Justificativa                                                  |
 |-----------------|------|----------------------------------------------------------------|
-| `throughput`    | 0.45 | Combinação de commits + PRs; melhor proxy de entrega real.    |
+| `throughput`    | 0.45 | Combinação de commits + PRs; melhor proxy de entrega real.     |
 | `active_days`   | 0.35 | Consistência temporal — especialmente importante para juniores.|
 | `churn`         | 0.20 | Linhas adicionadas + removidas; indicador secundário.          |
 
 | Nível        | Composite score |
 |--------------|-----------------|
-| `abaixo`     | 0.00 – 0.49          |
+| `abaixo`     | 0.00 – 0.49     |
 | `atendendo`  | 0.50 – 0.79     |
 | `acima`      | 0.80 – 0.89     |
-| `muito_acima`| 0.90 – 1.00          |
+| `muito_acima`| 0.90 – 1.00     |
 
 ### Limitações conhecidas
 - Mede **atividade no GitHub** — estudo, pareamento, reuniões e mentoria recebida não são capturados.
