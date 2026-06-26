@@ -1,34 +1,11 @@
-"use client";
-
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { usePathname } from "next/navigation";
+import { headers } from "next/headers";
 
-import { authClient } from "@/lib/auth-client";
-import { cn } from "@/lib/utils";
+import { auth } from "@/lib/auth";
+import NavLinks from "./NavLinks";
 
-const NAV_LINKS = [
-  { label: "INÍCIO",  href: "/",             auth: false },
-  { label: "PAINEL",  href: "/dashboard",    auth: true  },
-  { label: "SETUP",   href: "/settings",     auth: true  },
-  { label: "DOCS",    href: "/contributions", auth: false },
-] as const;
-
-function isActive(pathname: string, href: string): boolean {
-  if (href === "/") return pathname === "/";
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
-
-export default function NavBar() {
-  const pathname = usePathname();
-  const { data: session } = authClient.useSession();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => { setMounted(true); }, []);
-
-  // Before mount: show all links (server render matches, no hydration mismatch).
-  // After mount: hide auth-only links when logged out.
-  const isLoggedIn = !mounted || !!session;
+export default async function NavBar() {
+  const session = await auth.api.getSession({ headers: await headers() });
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-background">
@@ -43,29 +20,7 @@ export default function NavBar() {
           </span>
         </Link>
 
-        <nav aria-label="Navegação principal">
-          <ul className="flex items-center gap-6">
-            {NAV_LINKS.filter((link) => !link.auth || isLoggedIn).map((link) => {
-              const active = isActive(pathname, link.href);
-              return (
-                <li key={link.href}>
-                  <Link
-                    href={link.href}
-                    aria-current={active ? "page" : undefined}
-                    className={cn(
-                      "font-mono text-xs tracking-wider transition-colors hover:text-foreground",
-                      active
-                        ? "text-accent underline decoration-accent underline-offset-4"
-                        : "text-muted",
-                    )}
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
+        <NavLinks isLoggedIn={!!session} />
       </div>
     </header>
   );
