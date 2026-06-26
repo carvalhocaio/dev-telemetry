@@ -98,7 +98,12 @@ async function commitAggregates(
   const join = scopeFilter
     ? sql`join ${repository} on ${eq(commit.repoId, repository.id)}`
     : sql``;
-  const where = and(eq(commit.userId, userId), scopeFilter);
+  const where = and(
+    eq(commit.userId, userId),
+    scopeFilter,
+    sql`${commit.message} not like 'Merge pull request%'`,
+    sql`${commit.message} not like 'Merge branch%'`,
+  );
   const rows = (await db.execute(
     sql`
       select

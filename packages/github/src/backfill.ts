@@ -241,7 +241,10 @@ async function ingestCommitsPage(
   const hasMore = resp.headers.link?.includes('rel="next"') ?? false;
 
   const candidates = resp.data.filter(
-    (c) => c.author?.login === userLogin && c.commit.author?.date,
+    (c) =>
+      c.author?.login === userLogin &&
+      c.commit.author?.date &&
+      c.parents.length < 2, // exclude merge commits
   );
 
   if (candidates.length === 0) {
@@ -427,16 +430,15 @@ async function ingestPrsPage(
         set: {
           state: sql`excluded.state`,
           ghMergedAt: sql`excluded."ghMergedAt"`,
-          updatedAt: new Date(),
         },
       });
   }
 
-  const deltaBytes = rows.reduce(
+  const deltaBytes = newRows.reduce(
     (sum, r) => sum + estimatePrBytes(r.title, r.body),
     0,
   );
-  return { count: rows.length, hasMore, deltaBytes };
+  return { count: userPrs.length, hasMore, deltaBytes };
 }
 
 // ---------------------------------------------------------------------------
