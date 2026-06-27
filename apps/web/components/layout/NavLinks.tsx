@@ -23,15 +23,18 @@ function isActive(pathname: string, href: string): boolean {
 export default function NavLinks({ isLoggedIn }: { isLoggedIn: boolean }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [prevPathname, setPrevPathname] = useState(pathname);
   const links = NAV_LINKS.filter((l) => !l.auth || isLoggedIn);
+
+  if (prevPathname !== pathname) {
+    setPrevPathname(pathname);
+    setOpen(false);
+  }
 
   async function handleSignOut() {
     await signOut();
     window.location.href = "/login";
   }
-
-  // Close menu on route change
-  useEffect(() => { setOpen(false); }, [pathname]);
 
   // Prevent body scroll when menu is open
   useEffect(() => {
