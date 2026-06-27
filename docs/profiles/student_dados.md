@@ -113,16 +113,16 @@ O classificador usa **percentis auto-referentes** — cada período é comparado
 
 | Componente      | Peso | Justificativa                                                  |
 |-----------------|------|----------------------------------------------------------------|
-| `throughput`    | 0.45 | Commits + PRs; proxy de atividade de estudo.                  |
-| `active_days`   | 0.35 | Consistência — o indicador mais importante para estudantes.   |
+| `throughput`    | 0.45 | Commits + PRs; proxy de atividade de estudo.                   |
+| `active_days`   | 0.35 | Consistência — o indicador mais importante para estudantes.    |
 | `churn`         | 0.20 | Linhas adicionadas + removidas; indicador secundário.          |
 
 | Nível        | Composite score |
 |--------------|-----------------|
-| `abaixo`     | < 0.20          |
-| `atendendo`  | 0.20 – 0.70     |
-| `acima`      | 0.70 – 0.90     |
-| `muito_acima`| ≥ 0.90          |
+| `abaixo`     | 0.00 – 0.49     |
+| `atendendo`  | 0.50 – 0.79     |
+| `acima`      | 0.80 – 0.89     |
+| `muito_acima`| 0.90 – 1.00     |
 
 ### Limitações conhecidas
 - Mede **atividade no GitHub** — cursos, leitura, exercícios fora do Git e estudo teórico não são capturados.

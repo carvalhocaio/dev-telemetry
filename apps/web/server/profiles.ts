@@ -13,11 +13,26 @@ import {
 const DEFAULT_KEY = "data_engineer_pleno";
 
 function labelFor(key: string): { label: string; group: string } {
+  if (key === "custom") return { label: "Personalizado", group: "" };
   const meta = PROFILE_METADATA.find((p) => p.key === key);
   return meta
     ? { label: meta.label, group: meta.group }
     : { label: key, group: "" };
 }
+
+/**
+ * GET /api/profiles/:key — public content preview for any built-in profile key.
+ * No auth required — content is not user-specific.
+ */
+export const publicProfileRoutes = new Elysia({ prefix: "/profiles" }).get(
+  "/:key",
+  ({ params, status }) => {
+    const content = PROFILE_REGISTRY[params.key];
+    if (!content) return status(404, { error: "perfil não encontrado" });
+    const meta = PROFILE_METADATA.find((p) => p.key === params.key);
+    return { key: params.key, label: meta?.label ?? params.key, group: meta?.group ?? "", content };
+  },
+);
 
 /**
  * Elysia plugin: user profile routes under /me.
@@ -46,6 +61,7 @@ export const profilesRoutes = new Elysia({ prefix: "/me" })
     return {
       profileKey: key,
       ...labelFor(key),
+      content,
       contentPreview: content.slice(0, 200),
       // Full custom content returned to the owner so the textarea can be pre-filled correctly.
       customContent: key === "custom" ? (row?.customContent ?? null) : null,

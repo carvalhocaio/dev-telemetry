@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import type { Database } from "@dev-telemetry/db/client";
 import {
   commit,
@@ -22,7 +22,7 @@ import {
 // Cursor
 // ---------------------------------------------------------------------------
 
-export type SyncMode = "full" | "incremental";
+export type SyncMode = "full" | "recent" | "week";
 export type SyncPhase = "repos" | "commits" | "prs" | "done";
 
 export interface SyncCursor {
@@ -195,6 +195,26 @@ async function discoverRepos(
 }
 
 // ---------------------------------------------------------------------------
+// Concurrency helper
+// ---------------------------------------------------------------------------
+
+async function pLimit<T>(
+  tasks: (() => Promise<T>)[],
+  concurrency: number,
+): Promise<T[]> {
+  const results: T[] = [];
+  let i = 0;
+  async function worker() {
+    while (i < tasks.length) {
+      const idx = i++;
+      results[idx] = await tasks[idx]!();
+    }
+  }
+  await Promise.all(Array.from({ length: Math.min(concurrency, tasks.length) }, worker));
+  return results;
+}
+
+// ---------------------------------------------------------------------------
 // Phase 2: ingest commits (one page)
 // ---------------------------------------------------------------------------
 
@@ -220,32 +240,81 @@ async function ingestCommitsPage(
 
   const hasMore = resp.headers.link?.includes('rel="next"') ?? false;
 
-  const rows = resp.data
-    .filter((c) => c.author?.login === userLogin && c.commit.author?.date)
-    .map((c) => {
-      const message = capCommitMessage(c.commit.message);
-      return {
-        userId,
-        repoId,
-        sha: c.sha,
-        message,
-        authoredAt: new Date(c.commit.author!.date!),
-        additions: c.stats?.additions ?? 0,
-        deletions: c.stats?.deletions ?? 0,
-        changedFiles: c.files?.length ?? 0,
-        htmlUrl: c.html_url,
-      };
-    });
+  const candidates = resp.data.filter(
+    (c) =>
+      c.author?.login === userLogin &&
+      c.commit.author?.date &&
+      c.parents.length < 2, // exclude merge commits
+  );
+
+  if (candidates.length === 0) {
+    return { count: 0, hasMore, deltaBytes: 0 };
+  }
+
+  // Identify commits in the DB and whether they already have stats.
+  const known = await db
+    .select({ sha: commit.sha, additions: commit.additions })
+    .from(commit)
+    .where(and(eq(commit.userId, userId), inArray(commit.sha, candidates.map((c) => c.sha))));
+
+  const knownShas = new Set(known.map((r) => r.sha));
+  // Commits in DB with additions=0 were ingested before stats fetching was added.
+  const missingStatsShas = new Set(known.filter((r) => r.additions === 0).map((r) => r.sha));
+
+  // Fetch stats for: new commits + existing commits missing stats.
+  const needStats = candidates.filter((c) => !knownShas.has(c.sha) || missingStatsShas.has(c.sha));
+
+  const statsMap = new Map<string, { additions: number; deletions: number; changedFiles: number }>();
+  await pLimit(
+    needStats.map((c) => async () => {
+      try {
+        const detail = await octokit.rest.repos.getCommit({ owner, repo: repoName, ref: c.sha });
+        statsMap.set(c.sha, {
+          additions: detail.data.stats?.additions ?? 0,
+          deletions: detail.data.stats?.deletions ?? 0,
+          changedFiles: detail.data.files?.length ?? 0,
+        });
+      } catch {
+        statsMap.set(c.sha, { additions: 0, deletions: 0, changedFiles: 0 });
+      }
+    }),
+    5,
+  );
+
+  // Only upsert commits we've actually fetched stats for.
+  // Skipping known commits with additions>0 prevents onConflictDoUpdate from
+  // overwriting correct stats with the 0-fallback.
+  const rows = needStats.map((c) => {
+    const stats = statsMap.get(c.sha) ?? { additions: 0, deletions: 0, changedFiles: 0 };
+    return {
+      userId,
+      repoId,
+      sha: c.sha,
+      message: capCommitMessage(c.commit.message),
+      authoredAt: new Date(c.commit.author!.date!),
+      additions: stats.additions,
+      deletions: stats.deletions,
+      changedFiles: stats.changedFiles,
+      htmlUrl: c.html_url,
+    };
+  });
 
   if (rows.length > 0) {
     await db
       .insert(commit)
       .values(rows)
-      .onConflictDoNothing({ target: [commit.userId, commit.sha] });
+      .onConflictDoUpdate({
+        target: [commit.userId, commit.sha],
+        set: {
+          additions: sql`excluded.additions`,
+          deletions: sql`excluded.deletions`,
+          changedFiles: sql`excluded."changedFiles"`,
+        },
+      });
   }
 
   const deltaBytes = rows.reduce((sum, r) => sum + estimateCommitBytes(r.message), 0);
-  return { count: rows.length, hasMore, deltaBytes };
+  return { count: candidates.length, hasMore, deltaBytes };
 }
 
 // ---------------------------------------------------------------------------
@@ -281,8 +350,48 @@ async function ingestPrsPage(
       (!since || new Date(pr.created_at) >= new Date(since)),
   );
 
-  const rows = userPrs.map((pr) => {
+  // Identify PRs already in the DB so we only fetch stats for new ones.
+  const knownNumbers = new Set(
+    userPrs.length > 0
+      ? (
+          await db
+            .select({ number: pullRequest.number })
+            .from(pullRequest)
+            .where(
+              and(
+                eq(pullRequest.userId, userId),
+                eq(pullRequest.repoId, repoId),
+                inArray(pullRequest.number, userPrs.map((pr) => pr.number)),
+              ),
+            )
+        ).map((r) => r.number)
+      : [],
+  );
+
+  const newPrs = userPrs.filter((pr) => !knownNumbers.has(pr.number));
+
+  // Fetch individual PR stats for new PRs (list endpoint omits additions/deletions).
+  const prStatsMap = new Map<number, { additions: number; deletions: number; changedFiles: number }>();
+  await pLimit(
+    newPrs.map((pr) => async () => {
+      try {
+        const detail = await octokit.rest.pulls.get({ owner, repo: repoName, pull_number: pr.number });
+        prStatsMap.set(pr.number, {
+          additions: detail.data.additions,
+          deletions: detail.data.deletions,
+          changedFiles: detail.data.changed_files,
+        });
+      } catch {
+        prStatsMap.set(pr.number, { additions: 0, deletions: 0, changedFiles: 0 });
+      }
+    }),
+    5,
+  );
+
+  // Insert new PRs with full stats.
+  const newRows = newPrs.map((pr) => {
     const body = pr.body ? capPrBody(pr.body) : null;
+    const stats = prStatsMap.get(pr.number) ?? { additions: 0, deletions: 0, changedFiles: 0 };
     return {
       userId,
       repoId,
@@ -292,28 +401,54 @@ async function ingestPrsPage(
       state: pr.state,
       ghCreatedAt: new Date(pr.created_at),
       ghMergedAt: pr.merged_at ? new Date(pr.merged_at) : null,
-      // stats not available from the list endpoint — default to 0
-      additions: 0,
-      deletions: 0,
-      changedFiles: 0,
+      additions: stats.additions,
+      deletions: stats.deletions,
+      changedFiles: stats.changedFiles,
       htmlUrl: pr.html_url,
     };
   });
 
-  if (rows.length > 0) {
+  if (newRows.length > 0) {
     await db
       .insert(pullRequest)
-      .values(rows)
-      .onConflictDoNothing({
+      .values(newRows)
+      .onConflictDoNothing({ target: [pullRequest.userId, pullRequest.repoId, pullRequest.number] });
+  }
+
+  // Always update state + ghMergedAt for all PRs on this page (including existing ones
+  // that may have transitioned from open → merged/closed since last sync).
+  if (userPrs.length > 0) {
+    const stateRows = userPrs.map((pr) => ({
+      userId,
+      repoId,
+      number: pr.number,
+      title: pr.title,
+      body: pr.body ? capPrBody(pr.body) : null,
+      state: pr.state,
+      ghCreatedAt: new Date(pr.created_at),
+      ghMergedAt: pr.merged_at ? new Date(pr.merged_at) : null,
+      additions: 0,
+      deletions: 0,
+      changedFiles: 0,
+      htmlUrl: pr.html_url,
+    }));
+    await db
+      .insert(pullRequest)
+      .values(stateRows)
+      .onConflictDoUpdate({
         target: [pullRequest.userId, pullRequest.repoId, pullRequest.number],
+        set: {
+          state: sql`excluded.state`,
+          ghMergedAt: sql`excluded."ghMergedAt"`,
+        },
       });
   }
 
-  const deltaBytes = rows.reduce(
+  const deltaBytes = newRows.reduce(
     (sum, r) => sum + estimatePrBytes(r.title, r.body),
     0,
   );
-  return { count: rows.length, hasMore, deltaBytes };
+  return { count: userPrs.length, hasMore, deltaBytes };
 }
 
 // ---------------------------------------------------------------------------
@@ -379,7 +514,11 @@ export async function runBackfillBatch(
     repoIds: [],
     repoIndex: 0,
     page: 1,
-    since: job.mode === "incremental" ? await getLastSyncDate(db, userId) : undefined,
+    since: job.mode === "recent"
+      ? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
+      : job.mode === "week"
+        ? new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+        : undefined,
   };
 
   try {
@@ -387,7 +526,8 @@ export async function runBackfillBatch(
     if (cursor.phase === "repos") {
       const repoIds = await discoverRepos(db, octokit, userId, userLogin, syncScopes);
       cursor = { ...cursor, phase: "commits", repoIds, repoIndex: 0, page: 1 };
-      await markJobRunning(db, jobId, "commits", cursor, { reposTotal: repoIds.length });
+      // reposTotal = repoIds * 2 (commits pass + PRs pass) so the bar fills linearly.
+      await markJobRunning(db, jobId, "commits", cursor, { reposTotal: repoIds.length * 2 });
       // Fall through to start commits in the same batch.
     }
 
@@ -416,35 +556,44 @@ export async function runBackfillBatch(
         continue;
       }
 
-      if (cursor.phase === "commits") {
-        const { count, hasMore, deltaBytes } = await ingestCommitsPage(
-          db, octokit, userId, repoId,
-          meta.owner, meta.name, userLogin,
-          cursor.page, cursor.since,
-        );
-        totalCommits += count;
-        if (deltaBytes > 0) await addUsage(db, userId, deltaBytes);
+      try {
+        if (cursor.phase === "commits") {
+          const { count, hasMore, deltaBytes } = await ingestCommitsPage(
+            db, octokit, userId, repoId,
+            meta.owner, meta.name, userLogin,
+            cursor.page, cursor.since,
+          );
+          totalCommits += count;
+          if (deltaBytes > 0) await addUsage(db, userId, deltaBytes);
 
-        if (hasMore) {
-          cursor = { ...cursor, page: cursor.page + 1 };
+          if (hasMore) {
+            cursor = { ...cursor, page: cursor.page + 1 };
+          } else {
+            reposDone += 1;
+            cursor = { ...cursor, repoIndex: cursor.repoIndex + 1, page: 1 };
+          }
         } else {
-          reposDone += 1;
-          cursor = { ...cursor, repoIndex: cursor.repoIndex + 1, page: 1 };
-        }
-      } else {
-        const { count, hasMore, deltaBytes } = await ingestPrsPage(
-          db, octokit, userId, repoId,
-          meta.owner, meta.name, userLogin,
-          cursor.page, cursor.since,
-        );
-        totalPrs += count;
-        if (deltaBytes > 0) await addUsage(db, userId, deltaBytes);
+          const { count, hasMore, deltaBytes } = await ingestPrsPage(
+            db, octokit, userId, repoId,
+            meta.owner, meta.name, userLogin,
+            cursor.page, cursor.since,
+          );
+          totalPrs += count;
+          if (deltaBytes > 0) await addUsage(db, userId, deltaBytes);
 
-        if (hasMore) {
-          cursor = { ...cursor, page: cursor.page + 1 };
-        } else {
-          cursor = { ...cursor, repoIndex: cursor.repoIndex + 1, page: 1 };
+          if (hasMore) {
+            cursor = { ...cursor, page: cursor.page + 1 };
+          } else {
+            reposDone += 1;
+            cursor = { ...cursor, repoIndex: cursor.repoIndex + 1, page: 1 };
+          }
         }
+      } catch (repoErr) {
+        // Skip repos that are inaccessible (renamed, deleted, permission revoked).
+        // Log and advance to the next repo rather than failing the entire job.
+        const msg = repoErr instanceof Error ? repoErr.message : String(repoErr);
+        console.warn(`[backfill] skipping ${meta.owner}/${meta.name} (page ${cursor.page}):`, msg);
+        cursor = { ...cursor, repoIndex: cursor.repoIndex + 1, page: 1 };
       }
 
       pagesProcessed++;
@@ -452,9 +601,10 @@ export async function runBackfillBatch(
     }
 
     // Transition commits → prs when all repos have been processed.
+    // Keep reposDone (= repoIds.length at this point) so the bar stays at 50%.
     if (cursor.phase === "commits" && cursor.repoIndex >= cursor.repoIds.length) {
       cursor = { ...cursor, phase: "prs", repoIndex: 0, page: 1 };
-      await updateJobCursor(db, jobId, cursor, { reposDone: 0 });
+      await updateJobCursor(db, jobId, cursor, { reposDone });
       return { done: false }; // Let the next batch start the prs phase.
     }
 
@@ -470,14 +620,4 @@ export async function runBackfillBatch(
     await finishJob(db, jobId, "error", message);
     throw err;
   }
-}
-
-async function getLastSyncDate(db: Database, userId: string): Promise<string | undefined> {
-  const [last] = await db
-    .select({ startedAt: syncJob.startedAt })
-    .from(syncJob)
-    .where(and(eq(syncJob.userId, userId), eq(syncJob.status, "done")))
-    .orderBy(sql`${syncJob.startedAt} DESC`)
-    .limit(1);
-  return last?.startedAt.toISOString();
 }

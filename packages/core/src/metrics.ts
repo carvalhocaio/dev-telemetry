@@ -57,6 +57,7 @@ type CommitAggregate = {
 type PrAggregate = {
   prCount: number;
   prMerged: number;
+  prOpen: number;
 };
 
 const EMPTY_COMMIT: CommitAggregate = {
@@ -66,7 +67,7 @@ const EMPTY_COMMIT: CommitAggregate = {
   activeDays: 0,
 };
 
-const EMPTY_PR: PrAggregate = { prCount: 0, prMerged: 0 };
+const EMPTY_PR: PrAggregate = { prCount: 0, prMerged: 0, prOpen: 0 };
 
 interface CommitRow {
   bucket: string;
@@ -80,6 +81,7 @@ interface PrRow {
   bucket: string;
   pr_count: number | string;
   pr_merged: number | string;
+  pr_open: number | string;
 }
 
 async function commitAggregates(
@@ -96,7 +98,12 @@ async function commitAggregates(
   const join = scopeFilter
     ? sql`join ${repository} on ${eq(commit.repoId, repository.id)}`
     : sql``;
-  const where = and(eq(commit.userId, userId), scopeFilter);
+  const where = and(
+    eq(commit.userId, userId),
+    scopeFilter,
+    sql`${commit.message} not like 'Merge pull request%'`,
+    sql`${commit.message} not like 'Merge branch%'`,
+  );
   const rows = (await db.execute(
     sql`
       select
@@ -141,7 +148,8 @@ async function prAggregates(
       select
         ${bucket} as "bucket",
         count(*) as "pr_count",
-        count(*) filter (where ${eq(pullRequest.state, "merged")}) as "pr_merged"
+        count(*) filter (where ${pullRequest.ghMergedAt} is not null) as "pr_merged",
+        count(*) filter (where ${eq(pullRequest.state, "open")}) as "pr_open"
       from ${pullRequest}
       ${join}
       where ${where}
@@ -154,6 +162,7 @@ async function prAggregates(
     result.set(String(r.bucket), {
       prCount: Number(r.pr_count),
       prMerged: Number(r.pr_merged),
+      prOpen: Number(r.pr_open),
     });
   }
   return result;
@@ -196,6 +205,7 @@ export async function computeMetrics(
       activeDays: c.activeDays,
       prCount: p.prCount,
       prMerged: p.prMerged,
+      prOpen: p.prOpen,
     };
   });
 }

@@ -8,19 +8,19 @@ import { toLevel, LEVEL_CUTS_BY_LEVEL } from "@dev-telemetry/core";
  */
 
 describe("percentile classifier — level assignment", () => {
-  it("assigns abaixo for composite below 0.20", () => {
+  it("assigns abaixo for composite below 0.50", () => {
     expect(toLevel(0.0)).toBe("abaixo");
-    expect(toLevel(0.19)).toBe("abaixo");
+    expect(toLevel(0.49)).toBe("abaixo");
   });
 
-  it("assigns atendendo for composite 0.20–0.70", () => {
-    expect(toLevel(0.20)).toBe("atendendo");
+  it("assigns atendendo for composite 0.50–0.80", () => {
     expect(toLevel(0.50)).toBe("atendendo");
-    expect(toLevel(0.699)).toBe("atendendo");
+    expect(toLevel(0.65)).toBe("atendendo");
+    expect(toLevel(0.799)).toBe("atendendo");
   });
 
-  it("assigns acima for composite 0.70–0.90", () => {
-    expect(toLevel(0.70)).toBe("acima");
+  it("assigns acima for composite 0.80–0.90", () => {
+    expect(toLevel(0.80)).toBe("acima");
     expect(toLevel(0.85)).toBe("acima");
     expect(toLevel(0.899)).toBe("acima");
   });

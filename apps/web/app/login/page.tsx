@@ -20,18 +20,12 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center px-4 bg-background">
-      <div className="w-full max-w-sm space-y-8">
-        {/* Terminal breadcrumb */}
-        <p className="font-mono text-xs text-muted">
-          <span className="text-accent">~</span>
-          {" "}/ dev-telemetry
-        </p>
-
+    <main className="flex min-h-screen items-center justify-center px-6 bg-background">
+      <div className="w-full max-w-md space-y-10">
         {/* Header */}
-        <div className="space-y-1">
-          <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
-            dev-telemetry
+        <div className="space-y-2">
+          <h1 className="font-display text-4xl font-bold tracking-tight text-foreground sm:text-6xl">
+            <span className="text-accent">$</span> dev-telemetry
           </h1>
           <p className="font-mono text-sm text-muted">
             telemetria para devs
@@ -39,7 +33,7 @@ export default function LoginPage() {
         </div>
 
         {/* Decorative terminal block */}
-        <div className="border border-surface bg-surface/40 p-4 font-mono text-xs space-y-1">
+        <div className="border border-border bg-surface p-4 font-mono text-xs space-y-1">
           <p className="text-muted">
             <span className="text-accent">$</span>{" "}
             <span className="text-foreground">whoami</span>
@@ -51,28 +45,17 @@ export default function LoginPage() {
         <button
           onClick={handleSignIn}
           disabled={pending}
-          className="
-            w-full flex items-center justify-center gap-3
-            border border-muted bg-transparent
-            font-mono text-sm text-foreground
-            px-4 py-3
-            transition-colors
-            hover:border-accent hover:text-accent
-            cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed
-          "
+          className="w-full flex items-center justify-center gap-3 border border-accent bg-transparent px-6 py-4 font-mono text-sm text-accent transition-colors hover:bg-accent hover:text-background cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          <span
-            aria-hidden="true"
-            className={pending ? "text-muted" : "text-accent"}
-          >
+          <span aria-hidden="true" className={pending ? "text-muted" : "text-accent"}>
             █
           </span>
-          {pending ? "autenticando..." : "Entrar com GitHub"}
+          {pending ? "AUTENTICANDO..." : "ENTRAR COM GITHUB"}
         </button>
 
         {error && (
-          <p className="font-mono text-xs text-red-400" role="alert">
-            <span className="text-red-500">✗</span> {error}
+          <p className="font-mono text-xs text-alert" role="alert">
+            <span>✗</span> {error}
           </p>
         )}
 

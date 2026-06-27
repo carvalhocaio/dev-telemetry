@@ -45,14 +45,14 @@ describe("regression: PR stats default to 0 when not in list response", () => {
 });
 
 describe("regression: toLevel handles boundary values exactly", () => {
-  // Boundary at exactly 0.20 should be atendendo, not abaixo.
-  it("composite 0.20 is atendendo (not abaixo)", () => {
-    expect(toLevel(0.20)).toBe("atendendo");
+  // Boundary at exactly 0.50 should be atendendo, not abaixo.
+  it("composite 0.50 is atendendo (not abaixo)", () => {
+    expect(toLevel(0.50)).toBe("atendendo");
   });
 
-  // Boundary at exactly 0.70 should be acima, not atendendo.
-  it("composite 0.70 is acima (not atendendo)", () => {
-    expect(toLevel(0.70)).toBe("acima");
+  // Boundary at exactly 0.80 should be acima, not atendendo.
+  it("composite 0.80 is acima (not atendendo)", () => {
+    expect(toLevel(0.80)).toBe("acima");
   });
 
   // Boundary at exactly 0.90 should be muito_acima, not acima.

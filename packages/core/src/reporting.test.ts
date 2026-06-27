@@ -12,6 +12,7 @@ function metrics(overrides: Partial<PeriodMetrics> & { period: string }): Period
     activeDays: 0,
     prCount: 0,
     prMerged: 0,
+    prOpen: 0,
     ...overrides,
   };
 }
@@ -98,7 +99,7 @@ describe("summarizeWindow aggregation", () => {
     expect(summary.start).toBe("2025-02-01");
     expect(summary.end).toBe("2025-02-28");
     expect(summary.composite).toBe(0);
-    expect(summary.level).toBe("abaixo"); // composite 0 < 0.20
+    expect(summary.level).toBe("abaixo"); // composite 0 < 0.50
     expect(summary.commitCount).toBe(0);
     expect(summary.partialCurrent).toBe(false);
   });

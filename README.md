@@ -13,12 +13,18 @@ data-driven view of their own work.
 
 ## Features
 
-- **GitHub sync** — resumable ingestion of commits and PRs via Octokit
-- **Metrics dashboard** — aggregated activity by day, week, and month
+- **GitHub sync** — resumable ingestion of commits and PRs via Octokit, with a
+  unified progress bar, ETA, and per-repository status
+- **Metrics dashboard** — score hero, metrics row, activity chart, and insight
+  panel, filtered by weekly, monthly, or all-time windows
 - **AI narratives** — natural-language summaries of each period's performance
+- **Profile viewer** — read the full markdown rubric for any built-in role from
+  the dashboard or settings
 - **Custom profiles** — built-in role rubrics or your own markdown rubric
 - **Multi-LLM support** — Anthropic Claude, OpenAI GPT, and Google Gemini
-- **Org/personal scope filter** — include or exclude organization activity
+- **Org/personal scope filter** — include or exclude organization activity,
+  persisted across sessions
+- **Responsive UI** — pit-wall/mission-control design with full mobile support
 
 ## Preview
 

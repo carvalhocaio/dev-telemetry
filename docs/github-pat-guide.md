@@ -13,12 +13,12 @@ Acesse: **GitHub → Settings → Developer settings → Personal access tokens 
 
 ### Escopos necessários
 
-| Escopo | Por quê |
-|---|---|
-| `read:user` | Confirmar o login do GitHub (identidade do perfil) |
-| `public_repo` | Commits e PRs em repositórios **públicos** |
-| `repo` | Commits e PRs em repositórios **privados** (adicione se tiver repos privados) |
-| `read:org` | Repositórios e contribuições em **organizações** das quais você faz parte |
+| Escopo        | Por quê                                                                       |
+|---------------|-------------------------------------------------------------------------------|
+| `read:user`   | Confirmar o login do GitHub (identidade do perfil)                            |
+| `public_repo` | Commits e PRs em repositórios **públicos**                                    |
+| `repo`        | Commits e PRs em repositórios **privados** (adicione se tiver repos privados) |
+| `read:org`    | Repositórios e contribuições em **organizações** das quais você faz parte     |
 
 > Se você só trabalha em repos públicos pessoais, `read:user` + `public_repo` é suficiente.
 
@@ -45,16 +45,16 @@ Selecione seu usuário (ou a organização, se quiser incluir repos da org).
 
 ### Permissões necessárias (Repository permissions)
 
-| Permissão | Nível |
-|---|---|
-| **Contents** | Read-only |
-| **Metadata** | Read-only (obrigatório automaticamente) |
-| **Pull requests** | Read-only |
+| Permissão         | Nível                                   |
+|-------------------|-----------------------------------------|
+| **Contents**      | Read-only                               |
+| **Metadata**      | Read-only (obrigatório automaticamente) |
+| **Pull requests** | Read-only                               |
 
 ### Permissões de conta (Account permissions)
 
-| Permissão | Nível |
-|---|---|
+| Permissão   | Nível     |
+|-------------|-----------|
 | **Profile** | Read-only |
 
 ---

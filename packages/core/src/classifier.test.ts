@@ -16,6 +16,7 @@ function metrics(overrides: Partial<PeriodMetrics> & { period: string }): Period
     activeDays: 0,
     prCount: 0,
     prMerged: 0,
+    prOpen: 0,
     ...overrides,
   };
 }
@@ -58,13 +59,13 @@ describe("WEIGHTS", () => {
 });
 
 describe("toLevel cut boundaries", () => {
-  it("maps composites to levels at the exact cuts (<.20/.70/.90)", () => {
+  it("maps composites to levels at the exact cuts (<.50/.80/.90)", () => {
     expect(toLevel(0)).toBe("abaixo");
-    expect(toLevel(0.19)).toBe("abaixo");
-    // boundary is exclusive lower bound: 0.20 is NOT < 0.20 → atendendo
-    expect(toLevel(0.2)).toBe("atendendo");
-    expect(toLevel(0.69)).toBe("atendendo");
-    expect(toLevel(0.7)).toBe("acima");
+    expect(toLevel(0.49)).toBe("abaixo");
+    // boundary is exclusive lower bound: 0.50 is NOT < 0.50 → atendendo
+    expect(toLevel(0.5)).toBe("atendendo");
+    expect(toLevel(0.79)).toBe("atendendo");
+    expect(toLevel(0.8)).toBe("acima");
     expect(toLevel(0.89)).toBe("acima");
     expect(toLevel(0.9)).toBe("muito_acima");
     expect(toLevel(1)).toBe("muito_acima");

@@ -42,11 +42,11 @@ No mercado brasileiro de 2025–2026, o perfil pleno típico carrega:
 
 ## 3. Faixa Salarial de Referência (Brasil, 2025)
 
-| Nível         | CLT (mensal)          | PJ (mensal)           |
-|---------------|-----------------------|-----------------------|
-| Júnior        | R$ 3.500 – R$ 7.000   | R$ 5.000 – R$ 9.000   |
+| Nível         | CLT (mensal)             | PJ (mensal)               |
+|---------------|--------------------------|---------------------------|
+| Júnior        | R$ 3.500 – R$ 7.000      | R$ 5.000 – R$ 9.000       |
 | **Pleno**     | **R$ 8.000 – R$ 14.000** | **R$ 11.000 – R$ 18.000** |
-| Sênior        | R$ 14.000 – R$ 24.000 | R$ 18.000 – R$ 32.000 |
+| Sênior        | R$ 14.000 – R$ 24.000    | R$ 18.000 – R$ 32.000     |
 
 > Fontes de referência: Glassdoor Brasil, levels.fyi, pesquisas salariais de comunidades de tecnologia.
 
@@ -129,18 +129,18 @@ Os limites numéricos são determinados pelo classificador determinístico (perc
 
 O classificador usa **percentis auto-referentes** — cada período é comparado apenas contra o próprio histórico.
 
-| Componente      | Peso | Justificativa                                                  |
-|-----------------|------|----------------------------------------------------------------|
-| `throughput`    | 0.45 | Combinação de commits + PRs; melhor proxy de entrega real.    |
+| Componente      | Peso | Justificativa                                                   |
+|-----------------|------|-----------------------------------------------------------------|
+| `throughput`    | 0.45 | Combinação de commits + PRs; melhor proxy de entrega real.      |
 | `active_days`   | 0.35 | Consistência temporal; evita que um dia de spam infle o período.|
-| `churn`         | 0.20 | Linhas adicionadas + removidas; indicador secundário.          |
+| `churn`         | 0.20 | Linhas adicionadas + removidas; indicador secundário.           |
 
 | Nível        | Composite score |
 |--------------|-----------------|
-| `abaixo`     | < 0.20          |
-| `atendendo`  | 0.20 – 0.70     |
-| `acima`      | 0.70 – 0.90     |
-| `muito_acima`| ≥ 0.90          |
+| `abaixo`     | 0.00 – 0.49     |
+| `atendendo`  | 0.50 – 0.79     |
+| `acima`      | 0.80 – 0.89     |
+| `muito_acima`| 0.90 – 1.00     |
 
 ### Limitações conhecidas
 - Mede **atividade no GitHub** — design, reuniões, mentoria e documentação fora do código não são capturados.

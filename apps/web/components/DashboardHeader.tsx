@@ -1,15 +1,26 @@
 "use client";
 
-import { LogOut, Settings } from "lucide-react";
+import { Eye, LogOut, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
-import AiPoweredBadge from "@/components/AiPoweredBadge";
 import ScopeSelector from "@/components/ScopeSelector";
+import SyncButton from "@/components/SyncButton";
 import { signOut } from "@/lib/auth-client";
 import { resolveMode } from "@/lib/range";
-import { APP_VERSION, REPO_URL } from "@/lib/version";
+import { MOBILE_BREAKPOINT } from "@/lib/utils";
 import { isScope, type Scope } from "@/types/report";
+
+const SCOPE_STORAGE_KEY = "dt:scope";
+
+interface ProfileData {
+  key: string;
+  label: string;
+  group: string;
+  content: string;
+}
 
 export default function DashboardHeader() {
   const searchParams = useSearchParams();
@@ -18,6 +29,24 @@ export default function DashboardHeader() {
   const rawScope = searchParams.get("scope");
   const scope: Scope = isScope(rawScope) ? rawScope : "all";
   const [orgs, setOrgs] = useState<string[]>([]);
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (!searchParams.get("scope")) {
+      const saved = localStorage.getItem(SCOPE_STORAGE_KEY);
+      if (saved && saved !== "all") {
+        const params = new URLSearchParams(searchParams.toString());
+        params.set("scope", saved);
+        router.replace(`/dashboard?${params.toString()}`);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem(SCOPE_STORAGE_KEY, scope);
+  }, [scope]);
 
   useEffect(() => {
     fetch("/api/me/orgs", { credentials: "include" })
@@ -26,53 +55,97 @@ export default function DashboardHeader() {
       .catch(() => null);
   }, []);
 
+  useEffect(() => {
+    fetch("/api/me/profile", { credentials: "include" })
+      .then((r) => r.ok ? r.json() as Promise<{ profileKey: string; label: string; group: string; content: string }> : null)
+      .then((d) => { if (d?.label) setProfile({ key: d.profileKey, label: d.label, group: d.group, content: d.content }); })
+      .catch(() => null);
+  }, []);
+
   async function handleSignOut() {
     await signOut();
-    router.replace("/login");
+    window.location.href = "/login";
   }
 
+  function handleViewProfile() {
+    if (!profile) return;
+    if (window.innerWidth < MOBILE_BREAKPOINT && profile.key !== "custom") {
+      window.open(`/profile/${profile.key}`, "_blank");
+    } else {
+      setModalOpen(true);
+    }
+  }
+
+  const profileLabel = profile
+    ? profile.group
+      ? `${profile.label} — ${profile.group}`
+      : profile.label
+    : null;
+
+  const profileBadge = (
+    <div className="flex items-center gap-2">
+      <span className="font-mono text-xs uppercase tracking-widest text-muted">
+        {profileLabel ?? <span className="animate-pulse">···</span>}
+      </span>
+      {profile && (
+        <button
+          type="button"
+          onClick={handleViewProfile}
+          aria-label="Ver descrição do cargo"
+          title="Ver descrição do cargo"
+          className="text-muted/40 transition-colors hover:text-muted"
+        >
+          <Eye size={12} aria-hidden="true" />
+        </button>
+      )}
+    </div>
+  );
+
   return (
-    <header className="flex flex-col gap-3 border-b border-surface pb-4">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex flex-col gap-0.5">
-          <h1 className="whitespace-nowrap font-display text-lg font-medium tracking-tight">
-            <span className="text-accent">$</span> dev-telemetry
-          </h1>
-          <a
-            href={REPO_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            title="GitHub"
-            className="font-mono text-[10px] text-muted transition-colors hover:text-accent"
-          >
-            {APP_VERSION}
-          </a>
+    <>
+      <header className="border-b border-border pb-4">
+        {/* ── Desktop: single row ── */}
+        <div className="hidden sm:flex items-center justify-between gap-4">
+          {profileBadge}
+          <div className="flex items-center gap-3">
+            <SyncButton />
+            <ScopeSelector currentScope={scope} currentMode={mode} orgs={orgs} />
+            <button type="button" onClick={handleSignOut} aria-label="Sair" title="Sair"
+              className="inline-flex items-center justify-center rounded-md border border-surface bg-surface/40 p-1.5 text-muted transition-colors hover:border-red-600 hover:text-red-600">
+              <LogOut size={14} aria-hidden="true" />
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <AiPoweredBadge />
-          <ScopeSelector currentScope={scope} currentMode={mode} orgs={orgs} />
-          <button
-            type="button"
-            onClick={() => router.push("/settings")}
-            aria-label="Configurações"
-            title="Configurações"
-            className="inline-flex items-center justify-center rounded-md border border-surface bg-surface/40 p-1.5 text-muted transition-colors hover:border-accent hover:text-foreground"
-          >
-            <Settings size={14} aria-hidden="true" />
-          </button>
-          <button
-            type="button"
-            onClick={handleSignOut}
-            aria-label="Sair"
-            title="Sair"
-            className="inline-flex items-center justify-center rounded-md border border-surface bg-surface/40 p-1.5 text-muted transition-colors hover:border-level-abaixo hover:text-level-abaixo"
-          >
-            <LogOut size={14} aria-hidden="true" />
-          </button>
+        {/* ── Mobile: stacked rows ── */}
+        <div className="flex flex-col gap-3 sm:hidden">
+          {profileBadge}
+          <SyncButton />
+          <ScopeSelector currentScope={scope} currentMode={mode} orgs={orgs} fullWidth />
         </div>
-      </div>
+      </header>
 
-    </header>
+      {modalOpen && profile && (
+        <>
+          <div className="fixed inset-0 z-50 bg-black/70" onClick={() => setModalOpen(false)} />
+          <div className="fixed inset-0 z-[51] overflow-y-auto p-8" onClick={() => setModalOpen(false)}>
+            <div className="relative mx-auto w-full max-w-2xl rounded-md border border-border bg-background" onClick={(e) => e.stopPropagation()}>
+              <div className="p-6">
+                <div className="mb-4 flex items-center justify-between gap-2">
+                  <span className="min-w-0 truncate font-mono text-xs uppercase tracking-wide text-accent">{profileLabel}</span>
+                  <button type="button" onClick={() => setModalOpen(false)} aria-label="Fechar"
+                    className="shrink-0 text-muted transition-colors hover:text-foreground">
+                    <X size={16} aria-hidden="true" />
+                  </button>
+                </div>
+                <div className="prose-modal" style={{ overflowWrap: "anywhere" }}>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{profile.content}</ReactMarkdown>
+                </div>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </>
   );
 }
