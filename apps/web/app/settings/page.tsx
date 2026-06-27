@@ -334,6 +334,10 @@ export default function SettingsPage() {
 
   async function previewProfile() {
     if (selectedKey === "custom") return;
+    if (window.innerWidth < 640) {
+      window.open(`/profile/${selectedKey}`, "_blank");
+      return;
+    }
     setPreviewLoading(true);
     try {
       const res = await fetch(`/api/profiles/${selectedKey}`, { credentials: "include" });
@@ -739,48 +743,47 @@ export default function SettingsPage() {
     </main>
 
       {previewOpen && previewContent && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onClick={() => setPreviewOpen(false)}
-        >
-          <div
-            className="relative max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-md border border-border bg-background p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <span className="font-mono text-xs uppercase tracking-widest text-accent">
-                {previewLabel}
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => {
-                    navigator.clipboard.writeText(previewContent ?? "");
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 2000);
-                  }}
-                  title="Copiar markdown"
-                  aria-label="Copiar markdown"
-                  className="flex items-center gap-1 font-mono text-[10px] text-muted transition-colors hover:text-accent"
-                >
-                  {copied ? <ClipboardCheck size={13} className="text-accent" /> : <Clipboard size={13} />}
-                  {copied ? "copiado" : "copiar markdown"}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPreviewOpen(false)}
-                  aria-label="Fechar"
-                  className="text-muted transition-colors hover:text-foreground"
-                >
-                  <X size={16} />
-                </button>
+        <>
+          <div className="fixed inset-0 z-50 bg-black/70" onClick={() => setPreviewOpen(false)} />
+          <div className="fixed inset-0 z-[51] overflow-y-auto p-8" onClick={() => setPreviewOpen(false)}>
+            <div className="relative mx-auto w-full max-w-2xl rounded-md border border-border bg-background" onClick={(e) => e.stopPropagation()}>
+              <div className="p-6">
+                <div className="mb-4 flex items-center justify-between gap-2">
+                  <span className="min-w-0 truncate font-mono text-xs uppercase tracking-wide text-accent">
+                    {previewLabel}
+                  </span>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(previewContent ?? "");
+                        setCopied(true);
+                        setTimeout(() => setCopied(false), 2000);
+                      }}
+                      title="Copiar markdown"
+                      aria-label="Copiar markdown"
+                      className="flex items-center gap-1 font-mono text-[10px] text-muted transition-colors hover:text-accent"
+                    >
+                      {copied ? <ClipboardCheck size={13} className="text-accent" /> : <Clipboard size={13} />}
+                      {copied ? "copiado" : "copiar markdown"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewOpen(false)}
+                      aria-label="Fechar"
+                      className="text-muted transition-colors hover:text-foreground"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                </div>
+                <div className="prose-modal" style={{ overflowWrap: "anywhere" }}>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{previewContent}</ReactMarkdown>
+                </div>
               </div>
             </div>
-            <div className="font-mono text-xs leading-relaxed text-muted [&_h1]:mb-3 [&_h1]:font-bold [&_h1]:uppercase [&_h1]:tracking-widest [&_h1]:text-foreground [&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:font-bold [&_h2]:uppercase [&_h2]:tracking-wider [&_h2]:text-foreground [&_h3]:mb-1 [&_h3]:mt-3 [&_h3]:font-semibold [&_h3]:text-foreground [&_li]:ml-4 [&_li]:list-disc [&_p]:mb-2 [&_strong]:text-foreground [&_table]:mb-3 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-border [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:border-border [&_th]:px-2 [&_th]:py-1 [&_th]:text-left [&_th]:text-foreground [&_ul]:mb-2">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{previewContent}</ReactMarkdown>
-            </div>
           </div>
-        </div>
+        </>
       )}
     </>
   );

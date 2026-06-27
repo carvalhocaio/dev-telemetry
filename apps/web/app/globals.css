@@ -177,3 +177,60 @@ body {
     cursor: pointer;
   }
 }
+
+@layer components {
+  .prose-modal {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.75rem;
+    line-height: 1.625;
+    color: var(--muted);
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .prose-modal * {
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-wrap: anywhere;
+  }
+
+  .prose-modal h1,
+  .prose-modal h2,
+  .prose-modal h3 {
+    color: var(--foreground);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: normal;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  .prose-modal h1 { margin-bottom: 0.75rem; }
+  .prose-modal h2 { margin-top: 1rem; margin-bottom: 0.5rem; }
+  .prose-modal h3 { font-weight: 600; margin-top: 0.75rem; margin-bottom: 0.25rem; }
+  .prose-modal p  { margin-bottom: 0.5rem; overflow-wrap: break-word; }
+  .prose-modal ul { margin-bottom: 0.5rem; }
+  .prose-modal li { margin-left: 1rem; list-style: disc; }
+  .prose-modal strong { color: var(--foreground); }
+
+  .prose-modal table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 0.75rem;
+    display: block;
+    overflow-x: auto;
+  }
+
+  .prose-modal th,
+  .prose-modal td {
+    border: 1px solid var(--border);
+    padding: 0.25rem 0.5rem;
+  }
+
+  .prose-modal th { color: var(--foreground); text-align: left; }
+
+  @media (min-width: 640px) {
+    .prose-modal h1 { letter-spacing: 0.1em; }
+    .prose-modal h2 { letter-spacing: 0.05em; }
+  }
+}

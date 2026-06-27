@@ -15,16 +15,12 @@ import { isScope, type Scope } from "@/types/report";
 const SCOPE_STORAGE_KEY = "dt:scope";
 
 interface ProfileData {
+  key: string;
   label: string;
   group: string;
   content: string;
 }
 
-/**
- * Contextual control bar for the dashboard (global navigation lives in NavBar):
- * shows the active profile on the left and the report controls + sign-out on the
- * right.
- */
 export default function DashboardHeader() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -35,7 +31,6 @@ export default function DashboardHeader() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  // Restore persisted scope on first load (when URL has no scope param)
   useEffect(() => {
     if (!searchParams.get("scope")) {
       const saved = localStorage.getItem(SCOPE_STORAGE_KEY);
@@ -48,7 +43,6 @@ export default function DashboardHeader() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Persist scope whenever it changes
   useEffect(() => {
     localStorage.setItem(SCOPE_STORAGE_KEY, scope);
   }, [scope]);
@@ -62,14 +56,23 @@ export default function DashboardHeader() {
 
   useEffect(() => {
     fetch("/api/me/profile", { credentials: "include" })
-      .then((r) => r.ok ? r.json() as Promise<ProfileData> : null)
-      .then((d) => { if (d?.label) setProfile(d); })
+      .then((r) => r.ok ? r.json() as Promise<{ profileKey: string; label: string; group: string; content: string }> : null)
+      .then((d) => { if (d?.label) setProfile({ key: d.profileKey, label: d.label, group: d.group, content: d.content }); })
       .catch(() => null);
   }, []);
 
   async function handleSignOut() {
     await signOut();
     window.location.href = "/login";
+  }
+
+  function handleViewProfile() {
+    if (!profile) return;
+    if (window.innerWidth < 640 && profile.key !== "custom") {
+      window.open(`/profile/${profile.key}`, "_blank");
+    } else {
+      setModalOpen(true);
+    }
   }
 
   const profileLabel = profile
@@ -80,66 +83,73 @@ export default function DashboardHeader() {
 
   return (
     <>
-      <header className="flex items-center justify-between gap-4 border-b border-border pb-4">
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-xs uppercase tracking-widest text-muted">
-            {profileLabel ?? <span className="animate-pulse">···</span>}
-          </span>
-          {profile && (
-            <button
-              type="button"
-              onClick={() => setModalOpen(true)}
-              aria-label="Ver descrição do cargo"
-              title="Ver descrição do cargo"
-              className="text-muted/40 transition-colors hover:text-muted"
-            >
-              <Eye size={12} aria-hidden="true" />
+      <header className="border-b border-border pb-4">
+        {/* ── Desktop: single row ── */}
+        <div className="hidden sm:flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs uppercase tracking-widest text-muted">
+              {profileLabel ?? <span className="animate-pulse">···</span>}
+            </span>
+            {profile && (
+              <button type="button" onClick={handleViewProfile}
+                aria-label="Ver descrição do cargo"
+                className="text-muted/40 transition-colors hover:text-muted">
+                <Eye size={12} />
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <SyncButton />
+            <ScopeSelector currentScope={scope} currentMode={mode} orgs={orgs} />
+            <button type="button" onClick={handleSignOut} aria-label="Sair"
+              className="inline-flex items-center justify-center rounded-md border border-surface bg-surface/40 p-1.5 text-muted transition-colors hover:border-red-600 hover:text-red-600">
+              <LogOut size={14} />
             </button>
-          )}
+          </div>
         </div>
 
-        <div className="flex items-center gap-3">
+        {/* ── Mobile: stacked rows ── */}
+        <div className="flex flex-col gap-3 sm:hidden">
+          {/* Row 1: profile + eye */}
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs uppercase tracking-widest text-muted">
+              {profileLabel ?? <span className="animate-pulse">···</span>}
+            </span>
+            {profile && (
+              <button type="button" onClick={handleViewProfile}
+                aria-label="Ver descrição do cargo"
+                className="text-muted/40 transition-colors hover:text-muted">
+                <Eye size={12} />
+              </button>
+            )}
+          </div>
+          {/* Row 2: sync */}
           <SyncButton />
-          <ScopeSelector currentScope={scope} currentMode={mode} orgs={orgs} />
-          <button
-            type="button"
-            onClick={handleSignOut}
-            aria-label="Sair"
-            title="Sair"
-            className="inline-flex items-center justify-center rounded-md border border-surface bg-surface/40 p-1.5 text-muted transition-colors hover:border-red-600 hover:text-red-600"
-          >
-            <LogOut size={14} aria-hidden="true" />
-          </button>
+          {/* Row 3: scope selector — full width */}
+          <ScopeSelector currentScope={scope} currentMode={mode} orgs={orgs} fullWidth />
         </div>
       </header>
 
       {modalOpen && profile && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onClick={() => setModalOpen(false)}
-        >
-          <div
-            className="relative max-h-[80vh] w-full max-w-2xl overflow-y-auto rounded-md border border-border bg-background p-6"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <span className="font-mono text-xs uppercase tracking-widest text-accent">
-                {profileLabel}
-              </span>
-              <button
-                type="button"
-                onClick={() => setModalOpen(false)}
-                aria-label="Fechar"
-                className="text-muted transition-colors hover:text-foreground"
-              >
-                <X size={16} />
-              </button>
-            </div>
-            <div className="font-mono text-xs leading-relaxed text-muted [&_h1]:mb-3 [&_h1]:font-bold [&_h1]:uppercase [&_h1]:tracking-widest [&_h1]:text-foreground [&_h2]:mb-2 [&_h2]:mt-4 [&_h2]:font-bold [&_h2]:uppercase [&_h2]:tracking-wider [&_h2]:text-foreground [&_h3]:mb-1 [&_h3]:mt-3 [&_h3]:font-semibold [&_h3]:text-foreground [&_li]:ml-4 [&_li]:list-disc [&_p]:mb-2 [&_strong]:text-foreground [&_table]:mb-3 [&_table]:w-full [&_table]:border-collapse [&_td]:border [&_td]:border-border [&_td]:px-2 [&_td]:py-1 [&_th]:border [&_th]:border-border [&_th]:px-2 [&_th]:py-1 [&_th]:text-left [&_th]:text-foreground [&_ul]:mb-2">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>{profile.content}</ReactMarkdown>
+        <>
+          <div className="fixed inset-0 z-50 bg-black/70" onClick={() => setModalOpen(false)} />
+          <div className="fixed inset-0 z-[51] overflow-y-auto p-8" onClick={() => setModalOpen(false)}>
+            <div className="relative mx-auto w-full max-w-2xl rounded-md border border-border bg-background" onClick={(e) => e.stopPropagation()}>
+              <div className="p-6">
+                <div className="mb-4 flex items-center justify-between gap-2">
+                  <span className="min-w-0 truncate font-mono text-xs uppercase tracking-wide text-accent">{profileLabel}</span>
+                  <button type="button" onClick={() => setModalOpen(false)} aria-label="Fechar"
+                    className="shrink-0 text-muted transition-colors hover:text-foreground">
+                    <X size={16} />
+                  </button>
+                </div>
+                <div className="prose-modal" style={{ overflowWrap: "anywhere" }}>
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{profile.content}</ReactMarkdown>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        </>
       )}
     </>
   );
