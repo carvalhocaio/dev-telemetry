@@ -10,6 +10,7 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { useSession } from "@/lib/auth-client";
+import { MOBILE_BREAKPOINT } from "@/lib/utils";
 
 const QUOTA_BYTES = 3 * 1024 * 1024 * 1024;
 const LLM_PROVIDERS = ["gemini", "openai", "anthropic"] as const;
@@ -334,7 +335,7 @@ export default function SettingsPage() {
 
   async function previewProfile() {
     if (selectedKey === "custom") return;
-    if (window.innerWidth < 640) {
+    if (window.innerWidth < MOBILE_BREAKPOINT) {
       window.open(`/profile/${selectedKey}`, "_blank");
       return;
     }

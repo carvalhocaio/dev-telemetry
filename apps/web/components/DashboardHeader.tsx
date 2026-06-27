@@ -10,6 +10,7 @@ import ScopeSelector from "@/components/ScopeSelector";
 import SyncButton from "@/components/SyncButton";
 import { signOut } from "@/lib/auth-client";
 import { resolveMode } from "@/lib/range";
+import { MOBILE_BREAKPOINT } from "@/lib/utils";
 import { isScope, type Scope } from "@/types/report";
 
 const SCOPE_STORAGE_KEY = "dt:scope";
@@ -68,7 +69,7 @@ export default function DashboardHeader() {
 
   function handleViewProfile() {
     if (!profile) return;
-    if (window.innerWidth < 640 && profile.key !== "custom") {
+    if (window.innerWidth < MOBILE_BREAKPOINT && profile.key !== "custom") {
       window.open(`/profile/${profile.key}`, "_blank");
     } else {
       setModalOpen(true);
@@ -81,51 +82,45 @@ export default function DashboardHeader() {
       : profile.label
     : null;
 
+  const profileBadge = (
+    <div className="flex items-center gap-2">
+      <span className="font-mono text-xs uppercase tracking-widest text-muted">
+        {profileLabel ?? <span className="animate-pulse">···</span>}
+      </span>
+      {profile && (
+        <button
+          type="button"
+          onClick={handleViewProfile}
+          aria-label="Ver descrição do cargo"
+          title="Ver descrição do cargo"
+          className="text-muted/40 transition-colors hover:text-muted"
+        >
+          <Eye size={12} aria-hidden="true" />
+        </button>
+      )}
+    </div>
+  );
+
   return (
     <>
       <header className="border-b border-border pb-4">
         {/* ── Desktop: single row ── */}
         <div className="hidden sm:flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-xs uppercase tracking-widest text-muted">
-              {profileLabel ?? <span className="animate-pulse">···</span>}
-            </span>
-            {profile && (
-              <button type="button" onClick={handleViewProfile}
-                aria-label="Ver descrição do cargo"
-                className="text-muted/40 transition-colors hover:text-muted">
-                <Eye size={12} />
-              </button>
-            )}
-          </div>
+          {profileBadge}
           <div className="flex items-center gap-3">
             <SyncButton />
             <ScopeSelector currentScope={scope} currentMode={mode} orgs={orgs} />
-            <button type="button" onClick={handleSignOut} aria-label="Sair"
+            <button type="button" onClick={handleSignOut} aria-label="Sair" title="Sair"
               className="inline-flex items-center justify-center rounded-md border border-surface bg-surface/40 p-1.5 text-muted transition-colors hover:border-red-600 hover:text-red-600">
-              <LogOut size={14} />
+              <LogOut size={14} aria-hidden="true" />
             </button>
           </div>
         </div>
 
         {/* ── Mobile: stacked rows ── */}
         <div className="flex flex-col gap-3 sm:hidden">
-          {/* Row 1: profile + eye */}
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-xs uppercase tracking-widest text-muted">
-              {profileLabel ?? <span className="animate-pulse">···</span>}
-            </span>
-            {profile && (
-              <button type="button" onClick={handleViewProfile}
-                aria-label="Ver descrição do cargo"
-                className="text-muted/40 transition-colors hover:text-muted">
-                <Eye size={12} />
-              </button>
-            )}
-          </div>
-          {/* Row 2: sync */}
+          {profileBadge}
           <SyncButton />
-          {/* Row 3: scope selector — full width */}
           <ScopeSelector currentScope={scope} currentMode={mode} orgs={orgs} fullWidth />
         </div>
       </header>
@@ -140,7 +135,7 @@ export default function DashboardHeader() {
                   <span className="min-w-0 truncate font-mono text-xs uppercase tracking-wide text-accent">{profileLabel}</span>
                   <button type="button" onClick={() => setModalOpen(false)} aria-label="Fechar"
                     className="shrink-0 text-muted transition-colors hover:text-foreground">
-                    <X size={16} />
+                    <X size={16} aria-hidden="true" />
                   </button>
                 </div>
                 <div className="prose-modal" style={{ overflowWrap: "anywhere" }}>

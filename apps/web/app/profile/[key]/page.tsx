@@ -8,6 +8,8 @@ interface Props {
   params: Promise<{ key: string }>;
 }
 
+export const dynamicParams = false;
+
 export async function generateStaticParams() {
   return PROFILE_METADATA.map((p) => ({ key: p.key }));
 }
