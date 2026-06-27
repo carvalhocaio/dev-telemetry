@@ -43,6 +43,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Improved
 - Dashboard streak metric renamed from "Dias Ativos" to "Sequência". (#915f1aa)
 - Profile badge JSX deduplicated; `MOBILE_BREAKPOINT` constant shared across components; accessibility attributes restored on icon buttons. (#5720010)
+- Hamburger menu now closes on route change using React's derived-state pattern instead of a synchronous setState-in-effect. (#97f3622)
+- "Carga Completa" in settings resumes an already-running sync job (409) instead of failing silently; auto-sync on dashboard skips if a sync completed in the last 30 minutes. (#9e3af3e)
 
 ## [1.0.2] - 2026-06-19
 
