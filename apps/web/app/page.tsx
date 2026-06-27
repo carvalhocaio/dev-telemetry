@@ -28,7 +28,7 @@ export default async function LandingPage() {
       {/* hero — title + subtitle left, CTA right */}
       <section className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h1 className="font-display text-6xl font-bold tracking-tight text-foreground">
+          <h1 className="font-display text-4xl font-bold tracking-tight text-foreground sm:text-6xl">
             <span className="text-accent">$</span> dev-telemetry
           </h1>
           <p className="mt-3 font-mono text-sm text-muted">
@@ -72,11 +72,9 @@ export default async function LandingPage() {
         </h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {FEATURES.map((feature) => (
-            <div key={feature} className="border border-border bg-surface p-4">
-              <span aria-hidden className="font-mono text-xs text-accent">
-                ·
-              </span>
-              <p className="mt-1 font-mono text-sm text-foreground">{feature}</p>
+            <div key={feature} className="flex items-start gap-2 border border-border bg-surface p-4">
+              <span aria-hidden className="shrink-0 font-mono text-xs text-accent">·</span>
+              <p className="font-mono text-sm text-foreground">{feature}</p>
             </div>
           ))}
         </div>

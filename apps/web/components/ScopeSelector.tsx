@@ -10,9 +10,10 @@ interface ScopeSelectorProps {
   currentScope: Scope;
   currentMode: string;
   orgs?: string[];
+  fullWidth?: boolean;
 }
 
-export default function ScopeSelector({ currentScope, currentMode, orgs = [] }: ScopeSelectorProps) {
+export default function ScopeSelector({ currentScope, currentMode, orgs = [], fullWidth = false }: ScopeSelectorProps) {
   const router = useRouter();
 
   const activeOrg = currentScope.startsWith("org:") ? currentScope.slice(4) : "";
@@ -26,7 +27,7 @@ export default function ScopeSelector({ currentScope, currentMode, orgs = [] }: 
     <div
       role="group"
       aria-label="Escopo de repositórios"
-      className="inline-flex items-center rounded-md border border-surface bg-surface/40 p-0.5 font-mono text-xs"
+      className={`flex items-center rounded-md border border-surface bg-surface/40 p-0.5 font-mono text-xs ${fullWidth ? "w-full" : "inline-flex"}`}
     >
       {fixedTabs.map(({ scope, label }) => {
         const active = scope === currentScope;
@@ -35,7 +36,7 @@ export default function ScopeSelector({ currentScope, currentMode, orgs = [] }: 
             key={scope}
             href={`/dashboard?scope=${scope}&mode=${currentMode}`}
             aria-current={active ? "page" : undefined}
-            className={`rounded px-3 py-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+            className={`shrink-0 rounded px-3 py-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
               active ? "bg-accent text-background" : "text-muted hover:text-foreground"
             }`}
           >
@@ -47,6 +48,7 @@ export default function ScopeSelector({ currentScope, currentMode, orgs = [] }: 
       {orgs.length > 0 && (
         <CustomSelect
           inline
+          stretch={fullWidth}
           value={activeOrg}
           onChange={(org) => router.push(`/dashboard?scope=org:${org}&mode=${currentMode}`)}
           options={[

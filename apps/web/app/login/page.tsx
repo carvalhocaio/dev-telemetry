@@ -24,7 +24,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-10">
         {/* Header */}
         <div className="space-y-2">
-          <h1 className="font-display text-6xl font-bold tracking-tight text-foreground">
+          <h1 className="font-display text-4xl font-bold tracking-tight text-foreground sm:text-6xl">
             <span className="text-accent">$</span> dev-telemetry
           </h1>
           <p className="font-mono text-sm text-muted">
