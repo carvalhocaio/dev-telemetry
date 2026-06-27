@@ -396,13 +396,30 @@ export default function SettingsPage() {
         body: JSON.stringify({ mode }),
         credentials: "include",
       });
-      if (!res.ok) { setSyncing(false); return; }
-      const { jobId, done } = (await res.json()) as { jobId: string; done: boolean };
 
-      const jobRes = await fetch("/api/sync/current", { credentials: "include" });
-      if (jobRes.ok) {
-        const job = (await jobRes.json()) as SyncJob | null;
-        if (job) setSyncJob(job);
+      let jobId: string;
+      let done: boolean;
+
+      if (res.status === 409) {
+        // A job is already running — resume it instead of failing silently.
+        const currentRes = await fetch("/api/sync/current", { credentials: "include" });
+        if (!currentRes.ok) { setSyncing(false); return; }
+        const current = (await currentRes.json()) as SyncJob | null;
+        if (!current?.id) { setSyncing(false); return; }
+        setSyncJob(current);
+        jobId = current.id;
+        done = current.status !== "running";
+      } else if (!res.ok) {
+        setSyncing(false);
+        return;
+      } else {
+        ({ jobId, done } = (await res.json()) as { jobId: string; done: boolean });
+
+        const jobRes = await fetch("/api/sync/current", { credentials: "include" });
+        if (jobRes.ok) {
+          const job = (await jobRes.json()) as SyncJob | null;
+          if (job) setSyncJob(job);
+        }
       }
 
       if (done) {

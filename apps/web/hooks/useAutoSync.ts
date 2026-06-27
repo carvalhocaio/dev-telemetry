@@ -27,6 +27,19 @@ export function useAutoSync() {
 }
 
 async function runWeekSync(): Promise<void> {
+  // Skip if a sync completed very recently (full/recent sync already in progress
+  // or just finished) — avoids overwriting the settings progress bar display.
+  const cur = await fetch("/api/sync/current", { credentials: "include" });
+  if (cur.ok) {
+    const current = (await cur.json()) as { status: string; updatedAt: string; mode: string } | null;
+    if (current) {
+      const updatedMs = Date.now() - new Date(current.updatedAt).getTime();
+      const isRecentDone = current.status === "done" && updatedMs < 30 * 60 * 1000;
+      const isRunning = current.status === "running";
+      if (isRecentDone || isRunning) return;
+    }
+  }
+
   const startRes = await fetch("/api/sync/start", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -38,9 +51,9 @@ async function runWeekSync(): Promise<void> {
   let done: boolean;
 
   if (startRes.status === 409) {
-    const cur = await fetch("/api/sync/current", { credentials: "include" });
-    if (!cur.ok) return;
-    const current = (await cur.json()) as { id: string; status: string } | null;
+    const curRes = await fetch("/api/sync/current", { credentials: "include" });
+    if (!curRes.ok) return;
+    const current = (await curRes.json()) as { id: string; status: string } | null;
     if (!current?.id) return;
     jobId = current.id;
     done = current.status !== "running";
