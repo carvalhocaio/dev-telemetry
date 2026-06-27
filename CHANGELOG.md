@@ -7,6 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-06-27
+
+### Added
+- New pit-wall/mission-control visual identity — deep black background, neon green accent, monospace typography throughout. (#5e486e2)
+- Dashboard rebuilt with focused components: score hero, metrics row, area chart, and 3-column insight panel (narrative · strengths · situation). (#025e9f8)
+- PRs metric now shows open/merged ratio (e.g. `2/15`). (#6b90b96)
+- Info tooltips on each dashboard metric explaining how it is calculated. (#5013fc9)
+- Selected org scope is now persisted across sessions via localStorage. (#ed81c11)
+- Weekly view added to the mode selector; dashboard auto-syncs on first load. (#985045a)
+- Sync now defaults to the last 30 days instead of incremental delta. (#3ad73f0)
+- Profile description modal — clicking the role badge shows the full markdown rubric. (#ed923fa)
+- Settings: preview button to read any built-in profile description with copy-to-clipboard. (#6b4f48d)
+- Mobile: profile viewer opens in a dedicated `/profile/[key]` page in a new tab. (#59aa255)
+- Mobile: hamburger menu with sign-out option, 3-row dashboard header, full-width scope selector, and responsive landing/login titles. (#befb128)
+
+### Fixed
+- Churn (lines added/deleted) is now correctly populated by fetching per-commit stats. (#3b200bf)
+- Stats are back-filled for commits ingested in earlier syncs that lacked diff data. (#d9643f0)
+- Re-syncing no longer resets churn to zero for known commits. (#2fa1099)
+- Sync progress now covers both commits and PRs in a single 0–100% bar with ETA and current repository name. (#2fa1099)
+- Merged PR count and stale detection corrected during ingestion. (#304436f)
+- Merge commits excluded from commit count, churn, and active-day calculations. (#7805d89)
+- Saving a custom profile now correctly persists the key; displays as "Personalizado". (#fbca594)
+- Storage and sync progress bars replaced with CSS bars — no more visual false-fill. (#b4673f1)
+- Sign-out triggers a full page reload to clear stale router cache. (#872b51e)
+- Commit count in the score hero no longer double-counts entries. (#7f321b9)
+- Score level badge now matches the composite score displayed. (#8488e48)
+- Switching time mode (weekly/monthly/all-time) no longer resets the org/scope filter. (#fe134ed)
+- Org selector no longer clips long organization names. (#d1580b5)
+- Sync job now skips inaccessible repositories (403/404) instead of failing the entire job. (#defa74c)
+- Navigation converted to Server Component — React hydration mismatches eliminated. (#4319f3e)
+- Footer is now pinned to the bottom of the viewport on all pages. (#915f1aa)
+
+### Improved
+- Dashboard streak metric renamed from "Dias Ativos" to "Sequência". (#915f1aa)
+- Profile badge JSX deduplicated; `MOBILE_BREAKPOINT` constant shared across components; accessibility attributes restored on icon buttons. (#5720010)
+
 ## [1.0.2] - 2026-06-19
 
 ### Fixed
