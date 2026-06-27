@@ -54,7 +54,7 @@ export default function MetricsRow({ window }: MetricsRowProps) {
       <Stat label="Commits" value={window.commitCount.toLocaleString("pt-BR")} hint={METRICS.commits} />
       <Stat label="PRs" value={`${window.prOpen}/${window.prMerged}`} hint={METRICS.prs} />
       <Stat label="Churn" value={churn.toLocaleString("pt-BR")} hint={METRICS.churn} />
-      <Stat label="Dias ativos" value={String(window.activeDays)} hint={METRICS.diasAtivos} />
+      <Stat label="Sequência" value={String(window.activeDays)} hint={METRICS.diasAtivos} />
     </dl>
   );
 }
