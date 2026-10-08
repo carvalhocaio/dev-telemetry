@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { createCrypto } from "@dev-telemetry/crypto";
-import { NarrativeSchema, resolveModel, DEFAULT_MODELS } from "@dev-telemetry/ai";
+import {
+  ExecutiveReportSchema,
+  NarrativeSchema,
+  resolveModel,
+  DEFAULT_MODELS,
+  generateExecutiveReport,
+} from "@dev-telemetry/ai";
 import {
   buildReport,
   computeMetrics,
@@ -20,6 +26,15 @@ describe("smoke — package exports", () => {
   it("crypto: round-trips plaintext", () => {
     const { encrypt, decrypt } = createCrypto("0".repeat(64));
     expect(decrypt(encrypt("hello world"))).toBe("hello world");
+  });
+
+  it("ai: ExecutiveReportSchema is a Zod schema", () => {
+    expect(ExecutiveReportSchema).toBeDefined();
+    expect(ExecutiveReportSchema.safeParse).toBeTypeOf("function");
+  });
+
+  it("ai: generateExecutiveReport is callable", () => {
+    expect(generateExecutiveReport).toBeTypeOf("function");
   });
 
   it("ai: NarrativeSchema is a Zod schema", () => {
