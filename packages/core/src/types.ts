@@ -1,13 +1,8 @@
 /**
  * Domain types for dev-telemetry — the single source of truth.
  *
- * These mirror `apps/web/types/report.ts` (camelCase) so the web app can later
- * import them from `@dev-telemetry/core` instead of redeclaring them. Ported
- * from the Python schemas (`api/app/schemas/reports.py`) and analysis modules.
+ * Ported from analysis modules and adapted for telemetry aggregation.
  */
-
-/** Performance level, lowest to highest. */
-export type Level = "abaixo" | "atendendo" | "acima" | "muito_acima";
 
 /** Bucketing resolution sent to the API as `granularity`. */
 export type Granularity = "daily" | "weekly" | "monthly";
@@ -65,14 +60,6 @@ export function mergeRate(m: PeriodMetrics): number | null {
   return m.prMerged / m.prCount;
 }
 
-/** Per-period classification result (composite + level + component ranks). */
-export interface PeriodClassification {
-  period: string;
-  level: Level;
-  composite: number;
-  components: Components;
-}
-
 /** First/last dates with data, used to pick an adaptive resolution for "todo". */
 export interface Coverage {
   first: string | null;
@@ -82,18 +69,14 @@ export interface Coverage {
 export interface ReportMeta {
   granularity: string;
   sampleSize: number;
-  weights: Record<string, number>;
-  levelCuts: Record<string, number>;
   smallSample: boolean;
   coverage: Coverage;
 }
 
-/** Aggregated totals + representative level for the currently filtered window. */
+/** Aggregated totals for the currently filtered window. */
 export interface WindowSummary {
   start: string | null;
   end: string | null;
-  level: Level;
-  composite: number;
   commitCount: number;
   prCount: number;
   prMerged: number;
@@ -108,10 +91,6 @@ export interface WindowSummary {
 export interface PeriodReport {
   /** ISO date "YYYY-MM-DD" identifying the period (start). */
   period: string;
-  level: Level;
-  /** Composite score, 0..1. */
-  composite: number;
-  components: Components;
   commitCount: number;
   prCount: number;
   prMerged: number;

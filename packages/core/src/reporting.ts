@@ -12,17 +12,10 @@
  */
 
 import { bucketStart, toLocalISODate } from "./bucket";
-import {
-  classify,
-  LEVEL_CUTS_BY_LEVEL,
-  toLevel,
-  WEIGHTS,
-} from "./classifier";
 import { computeMetrics } from "./metrics";
 import {
   type Coverage,
   type Granularity,
-  type PeriodClassification,
   type PeriodMetrics,
   type PeriodReport,
   type Report,
@@ -74,20 +67,10 @@ function coverageOf(metrics: PeriodMetrics[]): Coverage {
   };
 }
 
-function toPeriodReport(
-  m: PeriodMetrics,
-  c: PeriodClassification,
-): PeriodReport {
+function toPeriodReport(m: PeriodMetrics): PeriodReport {
   const rate = mergeRate(m);
   return {
     period: m.period,
-    level: toLevel(Math.round(c.composite * 100) / 100),
-    composite: round4(c.composite),
-    components: {
-      throughput: round4(c.components.throughput),
-      active_days: round4(c.components.active_days),
-      churn: round4(c.components.churn),
-    },
     commitCount: m.commitCount,
     prCount: m.prCount,
     prMerged: m.prMerged,
@@ -100,25 +83,17 @@ function toPeriodReport(
 }
 
 /**
- * Pure window summary — aggregates the in-window periods and derives the
- * representative level. Factored out of `buildReport` so it can be unit-tested
+ * Pure window summary — aggregates the in-window periods.
+ * Factored out of `buildReport` so it can be unit-tested
  * with hand-built data and no DB. `today` is injected for determinism.
- *
- * Mirrors `_build_window` in the Python reporting module exactly.
  */
 export function summarizeWindow(
   granularity: Granularity,
-  inWindow: Array<{ metrics: PeriodMetrics; classification: PeriodClassification }>,
+  metrics: PeriodMetrics[],
   start: string | undefined,
   end: string | undefined,
-  today: Date,
+  today: Date = new Date(),
 ): WindowSummary {
-  const metrics = inWindow.map((x) => x.metrics);
-  const composite =
-    inWindow.length > 0
-      ? inWindow.reduce((acc, x) => acc + x.classification.composite, 0) /
-        inWindow.length
-      : 0;
   const periods = metrics.map((m) => m.period);
   const currentBucket = bucketStart(granularity, toLocalISODate(today));
 
@@ -131,8 +106,6 @@ export function summarizeWindow(
   return {
     start: start !== undefined ? start : minPeriod,
     end: end !== undefined ? end : maxPeriod,
-    level: toLevel(Math.round(composite * 100) / 100),
-    composite: round4(composite),
     commitCount: sum((m) => m.commitCount),
     prCount: sum((m) => m.prCount),
     prMerged: sum((m) => m.prMerged),
@@ -162,25 +135,15 @@ export async function buildReport(
     scope ?? "all",
     githubLogin,
   );
-  const classifications = classify(metrics);
-  const byPeriod = new Map(metrics.map((m) => [m.period, m]));
 
-  const inWindow = classifications
-    .filter((c) => within(c.period, start, end))
-    .map((c) => ({ metrics: byPeriod.get(c.period)!, classification: c }));
-
-  const periods = inWindow
-    .map((x) => toPeriodReport(x.metrics, x.classification))
-    .reverse();
-
+  const inWindow = metrics.filter((m) => within(m.period, start, end));
+  const periods = inWindow.map((m) => toPeriodReport(m)).reverse();
   const window = summarizeWindow(granularity, inWindow, start, end, today);
 
   return {
     meta: {
       granularity,
       sampleSize: metrics.length,
-      weights: { ...WEIGHTS },
-      levelCuts: { ...LEVEL_CUTS_BY_LEVEL },
       smallSample: metrics.length < SMALL_SAMPLE_THRESHOLD,
       coverage: coverageOf(metrics),
     },

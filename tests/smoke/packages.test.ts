@@ -2,9 +2,6 @@ import { describe, expect, it } from "vitest";
 import { createCrypto } from "@dev-telemetry/crypto";
 import { NarrativeSchema, resolveModel, DEFAULT_MODELS } from "@dev-telemetry/ai";
 import {
-  toLevel,
-  WEIGHTS,
-  LEVEL_CUTS_BY_LEVEL,
   buildReport,
   computeMetrics,
 } from "@dev-telemetry/core";
@@ -37,22 +34,6 @@ describe("smoke — package exports", () => {
     expect(DEFAULT_MODELS).toHaveProperty("gemini");
     expect(DEFAULT_MODELS).toHaveProperty("openai");
     expect(DEFAULT_MODELS).toHaveProperty("anthropic");
-  });
-
-  it("core: toLevel is callable", () => {
-    expect(toLevel).toBeTypeOf("function");
-  });
-
-  it("core: WEIGHTS sum to ~1", () => {
-    const sum = Object.values(WEIGHTS).reduce((a, b) => a + b, 0);
-    expect(sum).toBeCloseTo(1, 5);
-  });
-
-  it("core: LEVEL_CUTS_BY_LEVEL has abaixo, atendendo, acima cuts", () => {
-    expect(LEVEL_CUTS_BY_LEVEL).toHaveProperty("abaixo");
-    expect(LEVEL_CUTS_BY_LEVEL).toHaveProperty("atendendo");
-    expect(LEVEL_CUTS_BY_LEVEL).toHaveProperty("acima");
-    // muito_acima is the catch-all (no upper cut) — not in this map
   });
 
   it("core: buildReport is callable", () => {

@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
 import { NarrativeSchema } from "@dev-telemetry/ai";
-import { toLevel } from "@dev-telemetry/core";
 import { capCommitMessage, capPrBody } from "@dev-telemetry/github";
 
 // vi.mock MUST be at the top level of the module — it is hoisted before test
@@ -41,23 +40,6 @@ describe("regression: PR stats default to 0 when not in list response", () => {
       watchouts: [],
     });
     expect(result.success).toBe(true);
-  });
-});
-
-describe("regression: toLevel handles boundary values exactly", () => {
-  // Boundary at exactly 0.50 should be atendendo, not abaixo.
-  it("composite 0.50 is atendendo (not abaixo)", () => {
-    expect(toLevel(0.50)).toBe("atendendo");
-  });
-
-  // Boundary at exactly 0.80 should be acima, not atendendo.
-  it("composite 0.80 is acima (not atendendo)", () => {
-    expect(toLevel(0.80)).toBe("acima");
-  });
-
-  // Boundary at exactly 0.90 should be muito_acima, not acima.
-  it("composite 0.90 is muito_acima (not acima)", () => {
-    expect(toLevel(0.90)).toBe("muito_acima");
   });
 });
 

@@ -2,15 +2,13 @@ import "server-only";
 import { and, eq, gte, lt } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { db } from "@dev-telemetry/db/client";
-import { commit, pullRequest, user, userProfile, userSecret } from "@dev-telemetry/db/schema";
+import { commit, pullRequest, user, userSecret } from "@dev-telemetry/db/schema";
 import { buildReport } from "@dev-telemetry/core/reporting";
-import { resolveProfile } from "@dev-telemetry/core";
 import type { Granularity, Scope } from "@dev-telemetry/core/types";
 import { generateNarrative } from "@dev-telemetry/ai/narrative";
 import type { LlmProvider } from "@dev-telemetry/ai/providers";
 import { auth } from "@/lib/auth";
 import { appCrypto } from "@/lib/app-crypto";
-import { PROFILE_REGISTRY } from "@/lib/profiles";
 
 const GRANULARITIES = ["daily", "weekly", "monthly"] as const;
 const SCOPES = ["all", "org", "personal"] as const;
@@ -105,10 +103,9 @@ export const reportsRoutes = new Elysia()
       const periodStart = new Date(body.period);
       const periodEnd = bucketEnd(granularity, body.period);
 
-      // Require LLM config + load user profile in parallel
-      const [[secret], [profileRow], [userRow]] = await Promise.all([
+      // Require LLM config
+      const [[secret], [userRow]] = await Promise.all([
         db.select().from(userSecret).where(eq(userSecret.userId, userId)).limit(1),
-        db.select().from(userProfile).where(eq(userProfile.userId, userId)).limit(1),
         scope !== "all"
           ? db.select({ githubLogin: user.githubLogin }).from(user).where(eq(user.id, userId)).limit(1)
           : Promise.resolve([null]),
@@ -121,11 +118,7 @@ export const reportsRoutes = new Elysia()
       }
 
       const apiKey = appCrypto.decrypt(secret.llmApiKeyEnc);
-      const profileContent = resolveProfile(
-        PROFILE_REGISTRY,
-        profileRow?.profileKey,
-        profileRow?.customContent,
-      );
+      const profileContent = "";
 
       const githubLogin = userRow?.githubLogin ?? undefined;
 
