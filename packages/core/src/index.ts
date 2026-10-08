@@ -7,3 +7,10 @@ export {
   SMALL_SAMPLE_THRESHOLD,
   type BuildReportInput,
 } from "./reporting";
+export {
+  getDailyActivity,
+  aggregateDailyActivity,
+  toLocalDateStr,
+  type AggregateActivityInput,
+} from "./daily-activity";
+

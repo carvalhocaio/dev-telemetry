@@ -4,6 +4,7 @@ import { NarrativeSchema, resolveModel, DEFAULT_MODELS } from "@dev-telemetry/ai
 import {
   buildReport,
   computeMetrics,
+  getDailyActivity,
 } from "@dev-telemetry/core";
 import { capCommitMessage, capPrBody, QUOTA_BYTES } from "@dev-telemetry/github";
 
@@ -42,6 +43,10 @@ describe("smoke — package exports", () => {
 
   it("core: computeMetrics is callable", () => {
     expect(computeMetrics).toBeTypeOf("function");
+  });
+
+  it("core: getDailyActivity is callable", () => {
+    expect(getDailyActivity).toBeTypeOf("function");
   });
 
   it("github: capCommitMessage is callable", () => {

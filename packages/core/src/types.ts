@@ -108,3 +108,56 @@ export interface Report {
   /** Newest-first, exactly as the Python API returned. */
   periods: PeriodReport[];
 }
+
+export interface DailyCommitItem {
+  sha: string;
+  message: string;
+  repoName: string;
+  additions: number;
+  deletions: number;
+  authoredAt: string;
+  htmlUrl: string;
+}
+
+export interface DailyPrItem {
+  number: number;
+  title: string;
+  repoName: string;
+  state: string;
+  htmlUrl: string;
+  ghCreatedAt: string;
+  ghMergedAt: string | null;
+}
+
+export interface DailyActivityDay {
+  date: string; // YYYY-MM-DD
+  commitsCount: number;
+  prsCreated: number;
+  prsMerged: number;
+  churn: number;
+  repositories: string[];
+  commits: DailyCommitItem[];
+  prs: DailyPrItem[];
+}
+
+export interface DailyActivityReport {
+  days: DailyActivityDay[];
+  totals: {
+    daysCount: number;
+    commitsCount: number;
+    prsCreated: number;
+    prsMerged: number;
+    churn: number;
+    repositories: string[];
+  };
+}
+
+export interface GetDailyActivityInput {
+  db: { execute(query: unknown): Promise<unknown> };
+  userId: string;
+  start?: string; // YYYY-MM-DD
+  end?: string;   // YYYY-MM-DD
+  scope?: string; // "all" | "org" | "personal" | `org:${string}`
+  githubLogin?: string;
+}
+

@@ -8,7 +8,8 @@
     "./types": "./src/types.ts",
     "./bucket": "./src/bucket.ts",
     "./metrics": "./src/metrics.ts",
-    "./reporting": "./src/reporting.ts"
+    "./reporting": "./src/reporting.ts",
+    "./daily-activity": "./src/daily-activity.ts"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
