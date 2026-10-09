@@ -19,6 +19,8 @@ export default function DashboardHeader() {
   const mode = resolveMode(searchParams.get("mode"));
   const rawScope = searchParams.get("scope");
   const scope: Scope = isScope(rawScope) ? rawScope : "all";
+  const filterStart = searchParams.get("start") ?? undefined;
+  const filterEnd = searchParams.get("end") ?? undefined;
   const [orgs, setOrgs] = useState<string[]>([]);
 
   useEffect(() => {
@@ -61,7 +63,11 @@ export default function DashboardHeader() {
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <GenerateReportButton scope={scope} />
+          <GenerateReportButton
+            scope={scope}
+            filterStart={filterStart}
+            filterEnd={filterEnd}
+          />
           <SyncButton />
           <ScopeSelector currentScope={scope} currentMode={mode} orgs={orgs} />
           <button
@@ -93,7 +99,11 @@ export default function DashboardHeader() {
           </button>
         </div>
         <div className="flex items-center gap-2">
-          <GenerateReportButton scope={scope} />
+          <GenerateReportButton
+            scope={scope}
+            filterStart={filterStart}
+            filterEnd={filterEnd}
+          />
           <SyncButton />
         </div>
         <ScopeSelector currentScope={scope} currentMode={mode} orgs={orgs} fullWidth />

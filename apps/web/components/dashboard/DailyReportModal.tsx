@@ -33,8 +33,9 @@ export default function DailyReportModal({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState(false);
 
-  const fetchReport = useCallback(async () => {
+  const fetchReport = useCallback(async (signal?: AbortSignal) => {
     if (!startDate || !endDate) return;
     setLoading(true);
     setError(null);
@@ -49,6 +50,7 @@ export default function DailyReportModal({
           scope: scope ?? "all",
         }),
         credentials: "include",
+        signal,
       });
 
       if (!res.ok) {
@@ -61,6 +63,7 @@ export default function DailyReportModal({
       const data = (await res.json()) as ExecutiveReport;
       setReport(data);
     } catch (err: unknown) {
+      if (err instanceof Error && err.name === "AbortError") return;
       console.error("[DailyReportModal] error:", err);
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -70,11 +73,14 @@ export default function DailyReportModal({
 
   useEffect(() => {
     if (isOpen) {
-      void fetchReport();
+      const controller = new AbortController();
+      void fetchReport(controller.signal);
+      return () => controller.abort();
     } else {
       setReport(null);
       setError(null);
       setCopied(false);
+      setCopyError(false);
     }
   }, [isOpen, fetchReport]);
 
@@ -103,9 +109,12 @@ export default function DailyReportModal({
     try {
       await navigator.clipboard.writeText(report.markdownText);
       setCopied(true);
+      setCopyError(false);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       console.error("[DailyReportModal] copy failed:", err);
+      setCopyError(true);
+      setTimeout(() => setCopyError(false), 3000);
     }
   }
 
@@ -276,7 +285,7 @@ export default function DailyReportModal({
             <div>
               <button
                 type="button"
-                onClick={fetchReport}
+                onClick={() => void fetchReport()}
                 disabled={loading}
                 className="inline-flex cursor-pointer items-center gap-1.5 rounded-none border border-zinc-800 bg-surface px-3 py-1.5 font-mono text-xs text-foreground transition-colors hover:border-accent hover:text-accent disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -293,7 +302,7 @@ export default function DailyReportModal({
                 className="inline-flex cursor-pointer items-center gap-1.5 rounded-none border border-accent bg-accent/15 px-3 py-1.5 font-mono text-xs text-accent transition-colors hover:bg-accent/25 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {copied ? <Check size={13} /> : <Clipboard size={13} />}
-                {copied ? "Copiado!" : "Copiar Report"}
+                {copyError ? "Falha ao copiar" : copied ? "Copiado!" : "Copiar Report"}
               </button>
 
               <button

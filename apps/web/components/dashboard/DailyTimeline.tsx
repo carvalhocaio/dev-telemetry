@@ -151,15 +151,7 @@ export default function DailyTimeline({ start, end, scope }: DailyTimelineProps)
             >
               {/* Row header / summary */}
               <div
-                role="button"
-                tabIndex={0}
                 onClick={() => toggleExpand(day.date)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    toggleExpand(day.date);
-                  }
-                }}
                 className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 p-4 cursor-pointer select-none"
               >
                 {/* Left: Date + Weekday */}
