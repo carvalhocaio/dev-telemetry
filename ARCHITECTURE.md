@@ -8,17 +8,17 @@ security) work.
 ## 1. Overview
 
 dev-telemetry is a single Next.js application that embeds its own API. GitHub
-activity is ingested, persisted to PostgreSQL, transformed into metrics,
-classified against the user's own history, and finally summarized by an LLM.
+activity is ingested, persisted to PostgreSQL, aggregated into daily timelines,
+and compiled into structured executive reports by an LLM.
 
 ```
 GitHub API → Octokit Ingestion → PostgreSQL
                                      ↓
                            @dev-telemetry/core
-                     (metrics · classification · reporting)
+                     (daily aggregation · metrics)
                                      ↓
                            @dev-telemetry/ai
-                     (narrative generation · multi-LLM)
+                     (executive reports · dailies)
                                      ↓
                         Next.js + Elysia API → React UI
 ```
@@ -33,8 +33,8 @@ gives the frontend a fully typed view of the API without code generation.
 | Package               | Purpose                                            | Key exports                                              |
 | --------------------- | -------------------------------------------------- | -------------------------------------------------------- |
 | `apps/web`            | Next.js app: pages, components, Elysia API         | App Router routes, `server/` route handlers              |
-| `@dev-telemetry/core` | Metrics aggregation, classification, reporting     | metric buckets, classifier, report builders              |
-| `@dev-telemetry/ai`   | Multi-provider LLM narrative generation            | narrative generator, model resolution, Zod output schema |
+| `@dev-telemetry/core` | Daily activity aggregation, metrics, reporting     | daily activity, metric buckets, reporting                |
+| `@dev-telemetry/ai`   | Multi-provider LLM executive report & daily engine | report generator, model resolution, Zod schemas          |
 | `@dev-telemetry/github`| Octokit-based ingestion and resumable backfill    | sync runner, cursor pagination, backfill driver          |
 | `@dev-telemetry/crypto`| AES-256-GCM encryption for secrets                | `encrypt`, `decrypt` helpers                             |
 | `@dev-telemetry/db`   | Drizzle schema and database client                 | schema tables, Drizzle client                            |

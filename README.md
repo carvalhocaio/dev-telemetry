@@ -1,30 +1,24 @@
 # dev-telemetry
 
-> Personal developer performance dashboard — powered by your GitHub activity
+> Developer activity timeline & AI executive report generator — powered by your GitHub activity
 
 **Live:** https://dev-telemetry-one.vercel.app
 
 dev-telemetry ingests your GitHub activity (commits and pull requests), stores
-your credentials encrypted at rest, computes performance metrics, and generates
-AI-powered narratives that explain how your output is trending over time. It is
+your credentials encrypted at rest, aggregates daily activity metrics, and generates
+AI-powered executive reports and dailies grouped by project. It is
 built as a multi-tenant SaaS, so each user's data is fully isolated. The UI is
-in Brazilian Portuguese and is aimed at developers who want an objective,
-data-driven view of their own work.
+in Brazilian Portuguese and is aimed at developers who want an objective view
+of their daily output and ready-to-send reports for managers and standups.
 
 ## Features
 
-- **GitHub sync** — resumable ingestion of commits and PRs via Octokit, with a
-  unified progress bar, ETA, and per-repository status
-- **Metrics dashboard** — score hero, metrics row, activity chart, and insight
-  panel, filtered by weekly, monthly, or all-time windows
-- **AI narratives** — natural-language summaries of each period's performance
-- **Profile viewer** — read the full markdown rubric for any built-in role from
-  the dashboard or settings
-- **Custom profiles** — built-in role rubrics or your own markdown rubric
+- **GitHub sync** — fast, resumable ingestion of commits and PRs via Octokit, auto-scoped to active view periods
+- **Daily activity timeline** — clean chronological timeline with commits count, PRs created/merged, and detailed churn (+add / -del)
+- **AI executive reports & dailies** — concise, structured reports grouped by project/repository, ready to copy and send to managers or Slack
+- **Dynamic project selection** — filter which repositories to include right inside the report modal
 - **Multi-LLM support** — Anthropic Claude, OpenAI GPT, and Google Gemini
-- **Org/personal scope filter** — include or exclude organization activity,
-  persisted across sessions
-- **Responsive UI** — pit-wall/mission-control design with full mobile support
+- **Responsive UI** — Shadcn Lyra preset with Melodrama editorial typography and sharp modern borders
 
 ## Preview
 
@@ -96,13 +90,12 @@ dev-telemetry/
 │   ├── server/         # Elysia route handlers
 │   └── types/          # TypeScript types
 ├── packages/
-│   ├── ai/             # Multi-provider LLM narrative generation
-│   ├── core/           # Metrics, classification, reporting
+│   ├── ai/             # Multi-provider LLM executive reports & dailies
+│   ├── core/           # Daily activity aggregation, metrics, reporting
 │   ├── crypto/         # AES-256-GCM encryption
 │   ├── db/             # Drizzle schema + DB client
 │   └── github/         # Octokit ingestion + backfill
-├── tests/              # Integration, smoke, security, regression tests
-└── docs/profiles/      # Market profile rubrics (9 roles)
+└── tests/              # Integration, smoke, security, regression tests
 ```
 
 ## Running tests

@@ -7,7 +7,7 @@ const DISCUSSIONS_URL = `${REPO_URL}/discussions`;
 export const metadata: Metadata = {
   title: "Docs",
   description:
-    "Docs do dev-telemetry: issues, PRs, rubricas de perfil, novos provedores LLM e traduções.",
+    "Docs do dev-telemetry: linha do tempo de atividades, relatórios executivos com IA, issues e PRs.",
   openGraph: {
     type: "website",
     title: "Docs · dev-telemetry",
@@ -19,8 +19,8 @@ export const metadata: Metadata = {
 const WELCOME = [
   "issues — bugs, ideias e propostas de feature",
   "pull requests — correções e novas funcionalidades",
-  "rubricas de perfil — novos perfis de mercado para o classificador",
-  "provedores LLM — integração de novos modelos/SDKs",
+  "geração de relatórios — melhorias em prompts executivos e formatos de daily",
+  "provedores LLM — integração de novos modelos e provedores de IA",
   "traduções — i18n da interface e da documentação",
 ] as const;
 
@@ -28,7 +28,7 @@ const SETUP_LINES = [
   "$ git clone https://github.com/carvalhocaio/dev-telemetry",
   "$ cd dev-telemetry",
   "$ bun install",
-  "$ cp .env.example .env   # configure as variáveis abaixo",
+  "$ cp apps/web/.env.example apps/web/.env.local   # configure as variáveis no .env.local",
   "$ bun run dev",
 ] as const;
 

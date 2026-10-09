@@ -30,7 +30,7 @@ describe("SyncButton", () => {
   });
 
   it("sends since date scoped to active filter and does not show 'Sincronizando…' text", async () => {
-    let capturedBody: { mode: string; since?: string } | null = null;
+    let capturedBody: { mode?: string; since?: string } | null = null;
 
     global.fetch = vi.fn().mockImplementation((url: string, opts?: RequestInit) => {
       if (url === "/api/sync/start") {
@@ -53,11 +53,12 @@ describe("SyncButton", () => {
       expect(mockTrigger).toHaveBeenCalled();
     });
 
-    expect(capturedBody).toBeDefined();
-    expect(capturedBody?.mode).toBe("recent");
-    expect(capturedBody?.since).toBeDefined();
+    expect(capturedBody).not.toBeNull();
+    const body = capturedBody as unknown as { mode?: string; since?: string };
+    expect(body.mode).toBe("recent");
+    expect(body.since).toBeDefined();
     // Verify 2-day safety margin is included: 2026-10-03 - 2 days = 2026-10-01
-    expect(capturedBody?.since).toContain("2026-10-01");
+    expect(body.since).toContain("2026-10-01");
 
     // Text "Sincronizando…" should NOT be rendered
     expect(screen.queryByText("Sincronizando…")).toBeNull();

@@ -5,14 +5,14 @@ import { auth } from "@/lib/auth";
 
 const FEATURES = [
   "sync de commits e PRs direto do GitHub via PAT",
-  "narrativa de produtividade com LLM multi-provider (gemini · openai · anthropic)",
-  "classificador por percentil contra perfis de mercado",
+  "relatórios executivos e dailies com IA estruturados por projeto",
+  "linha do tempo diária com commits, PRs e churn detalhados",
 ] as const;
 
 const DEMO_LINES = [
   "→ commits e PRs sincronizados do GitHub",
-  "→ narrativa técnica gerada por IA",
-  "→ classificação por percentil vs. mercado",
+  "→ linha do tempo diária de atividades de engenharia",
+  "→ geração de dailies e reports executivos com IA",
   "→ multi-tenant · OSS · self-hostable",
 ] as const;
 
@@ -32,7 +32,7 @@ export default async function LandingPage() {
             <span className="text-accent">$</span> dev-telemetry
           </h1>
           <p className="mt-3 font-mono text-sm text-muted">
-            telemetria para devs — commits, PRs e narrativa IA em tempo real
+            linha do tempo para devs — commits, PRs e relatórios executivos com IA
           </p>
         </div>
 
