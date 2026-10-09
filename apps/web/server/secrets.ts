@@ -25,11 +25,30 @@ export const secretsRoutes = new Elysia({ prefix: "/me" })
       db.select().from(userUsage).where(eq(userUsage.userId, s.user.id)).limit(1),
     ]);
 
+    let hasPat = false;
+    let hasLlmKey = false;
+    if (row?.githubPatEnc) {
+      try {
+        appCrypto.decrypt(row.githubPatEnc);
+        hasPat = true;
+      } catch {
+        hasPat = false;
+      }
+    }
+    if (row?.llmApiKeyEnc) {
+      try {
+        appCrypto.decrypt(row.llmApiKeyEnc);
+        hasLlmKey = true;
+      } catch {
+        hasLlmKey = false;
+      }
+    }
+
     return {
-      hasPat: row?.githubPatEnc != null,
-      hasLlmKey: row?.llmApiKeyEnc != null,
-      llmProvider: row?.llmProvider ?? null,
-      llmModel: row?.llmModel ?? null,
+      hasPat,
+      hasLlmKey,
+      llmProvider: hasLlmKey ? (row?.llmProvider ?? null) : null,
+      llmModel: hasLlmKey ? (row?.llmModel ?? null) : null,
       bytesUsed: usage?.bytesUsed ?? 0,
     };
   })

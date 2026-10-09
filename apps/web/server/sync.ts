@@ -74,7 +74,14 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
           });
         }
 
-        const pat = appCrypto.decrypt(secret.githubPatEnc);
+        let pat: string;
+        try {
+          pat = appCrypto.decrypt(secret.githubPatEnc);
+        } catch {
+          return status(409, {
+            error: "GitHub PAT inválido ou não pôde ser descriptografado. Salve-o novamente em Configurações.",
+          });
+        }
 
         // Validate PAT + get GitHub login
         const ghUser = await fetchGitHubUser(pat);
@@ -172,7 +179,12 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
 
       if (!secret?.githubPatEnc) return status(409, { error: "PAT not set" });
 
-      const pat = appCrypto.decrypt(secret.githubPatEnc);
+      let pat: string;
+      try {
+        pat = appCrypto.decrypt(secret.githubPatEnc);
+      } catch {
+        return status(409, { error: "GitHub PAT não pôde ser descriptografado." });
+      }
 
       const [u] = await db
         .select({ githubLogin: user.githubLogin })

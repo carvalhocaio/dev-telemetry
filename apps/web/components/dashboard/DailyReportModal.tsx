@@ -54,10 +54,15 @@ export default function DailyReportModal({
       });
 
       if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as { error?: string };
-        throw new Error(
-          body.error ?? "Falha ao gerar o report de atividades. Tente novamente mais tarde.",
-        );
+        let errorMsg = "Falha ao gerar o report de atividades. Tente novamente mais tarde.";
+        try {
+          const body = (await res.json()) as { error?: string };
+          if (body?.error) errorMsg = body.error;
+        } catch {
+          const text = await res.text().catch(() => "");
+          if (text) errorMsg = text;
+        }
+        throw new Error(errorMsg);
       }
 
       const data = (await res.json()) as ExecutiveReport;

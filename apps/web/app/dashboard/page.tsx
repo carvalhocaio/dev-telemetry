@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { eq } from "drizzle-orm";
 
 import { auth } from "@/lib/auth";
+import { appCrypto } from "@/lib/app-crypto";
 import { db } from "@dev-telemetry/db/client";
 import { userSecret } from "@dev-telemetry/db/schema";
 import AuthGate from "@/components/AuthGate";
@@ -26,7 +27,28 @@ export default async function DashboardPage() {
     .where(eq(userSecret.userId, session.user.id))
     .limit(1);
 
-  if (!secret?.hasPat || !secret?.hasLlm) {
+  let hasValidPat = false;
+  let hasValidLlm = false;
+
+  if (secret?.hasPat) {
+    try {
+      appCrypto.decrypt(secret.hasPat);
+      hasValidPat = true;
+    } catch {
+      hasValidPat = false;
+    }
+  }
+
+  if (secret?.hasLlm) {
+    try {
+      appCrypto.decrypt(secret.hasLlm);
+      hasValidLlm = true;
+    } catch {
+      hasValidLlm = false;
+    }
+  }
+
+  if (!hasValidPat || !hasValidLlm) {
     redirect("/settings");
   }
 

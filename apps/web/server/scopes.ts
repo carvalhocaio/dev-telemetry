@@ -42,7 +42,12 @@ export const scopesRoutes = new Elysia({ prefix: "/me" })
       return { selectedScopes: row?.syncScopes ?? null, availableOrgs: [] };
     }
 
-    const pat = appCrypto.decrypt(row.githubPatEnc);
+    let pat: string;
+    try {
+      pat = appCrypto.decrypt(row.githubPatEnc);
+    } catch {
+      return { selectedScopes: row?.syncScopes ?? null, availableOrgs: [] };
+    }
 
     // Try GitHub API first; fall back to orgs already ingested in the DB.
     let orgLogins: string[] = [];

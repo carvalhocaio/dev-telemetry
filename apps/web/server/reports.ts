@@ -82,7 +82,16 @@ export const reportsRoutes = new Elysia()
         });
       }
 
-      const apiKey = appCrypto.decrypt(secret.llmApiKeyEnc);
+      let apiKey: string;
+      try {
+        apiKey = appCrypto.decrypt(secret.llmApiKeyEnc);
+      } catch (err) {
+        console.error("[reports] Failed to decrypt llmApiKeyEnc:", err);
+        return status(400, {
+          error:
+            "Não foi possível descriptografar a chave de API de LLM (a chave de criptografia do servidor foi alterada). Acesse Configurações para salvar sua chave novamente.",
+        });
+      }
 
       const scope = body.scope ?? "all";
       let githubLogin: string | undefined;
