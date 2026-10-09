@@ -1,8 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Check, Clipboard, Loader2, RefreshCw, Sparkles, X } from "lucide-react";
+import { AlertCircle, Check, Clipboard, Loader2, RefreshCw, Sparkles, X } from "lucide-react";
 import type { ExecutiveReport } from "@dev-telemetry/ai";
 
 export interface DailyReportModalProps {
@@ -39,6 +39,10 @@ export default function DailyReportModal({
 
   const [reposList, setReposList] = useState<string[]>(availableRepos ?? []);
   const [selectedRepos, setSelectedRepos] = useState<string[]>(availableRepos ?? []);
+  const [lastGeneratedRepos, setLastGeneratedRepos] = useState<string[] | null>(null);
+
+  const selectedReposRef = useRef(selectedRepos);
+  selectedReposRef.current = selectedRepos;
 
   // Sync availableRepos prop when it changes
   useEffect(() => {
@@ -66,10 +70,15 @@ export default function DailyReportModal({
   const fetchReport = useCallback(
     async (signal?: AbortSignal, reposOverride?: string[]) => {
       if (!startDate || !endDate) return;
+      const activeRepos = reposOverride ?? selectedReposRef.current;
+      if (reposList.length > 0 && activeRepos.length === 0) {
+        setError("Nenhum projeto selecionado. Marque ao menos um projeto acima para incluir no relatório.");
+        return;
+      }
+
       setLoading(true);
       setError(null);
-
-      const activeRepos = reposOverride ?? selectedRepos;
+      setReport(null);
 
       try {
         const res = await fetch("/api/reports/generate", {
@@ -99,6 +108,7 @@ export default function DailyReportModal({
 
         const data = (await res.json()) as ExecutiveReport;
         setReport(data);
+        setLastGeneratedRepos([...activeRepos]);
       } catch (err: unknown) {
         if (err instanceof Error && err.name === "AbortError") return;
         console.error("[DailyReportModal] error:", err);
@@ -107,7 +117,7 @@ export default function DailyReportModal({
         setLoading(false);
       }
     },
-    [startDate, endDate, scope, selectedRepos],
+    [startDate, endDate, scope],
   );
 
   useEffect(() => {
@@ -120,6 +130,7 @@ export default function DailyReportModal({
       setError(null);
       setCopied(false);
       setCopyError(false);
+      setLastGeneratedRepos(null);
     }
   }, [isOpen, fetchReport]);
 
@@ -158,21 +169,26 @@ export default function DailyReportModal({
   }
 
   function handleToggleRepo(repo: string) {
-    const updated = selectedRepos.includes(repo)
-      ? selectedRepos.filter((r) => r !== repo)
-      : [...selectedRepos, repo];
-    setSelectedRepos(updated);
-    void fetchReport(undefined, updated);
+    setSelectedRepos((prev) =>
+      prev.includes(repo) ? prev.filter((r) => r !== repo) : [...prev, repo],
+    );
   }
 
   function handleSelectAllRepos() {
     setSelectedRepos(reposList);
-    void fetchReport(undefined, reposList);
   }
 
   function handleSelectNoneRepos() {
     setSelectedRepos([]);
   }
+
+  const isRepoSelectionEmpty = reposList.length > 0 && selectedRepos.length === 0;
+
+  const isDirty =
+    report !== null &&
+    lastGeneratedRepos !== null &&
+    (selectedRepos.length !== lastGeneratedRepos.length ||
+      selectedRepos.some((r) => !lastGeneratedRepos.includes(r)));
 
   const isSingleDay = startDate === endDate;
   const headingDateText = isSingleDay
@@ -268,6 +284,30 @@ export default function DailyReportModal({
                   limpar
                 </button>
               </div>
+            </div>
+          )}
+
+          {reposList.length > 1 && isRepoSelectionEmpty && (
+            <div className="flex items-center gap-2 border-b border-amber-500/30 bg-amber-500/10 px-6 py-2 font-mono text-xs text-amber-400">
+              <AlertCircle size={13} className="shrink-0" />
+              <span>Nenhum projeto selecionado. Clique em ao menos um projeto acima para incluir no relatório.</span>
+            </div>
+          )}
+
+          {reposList.length > 1 && isDirty && !isRepoSelectionEmpty && (
+            <div className="flex items-center justify-between gap-3 border-b border-accent/30 bg-accent/10 px-6 py-2 font-mono text-xs text-accent">
+              <span className="truncate">
+                {selectedRepos.length} projeto{selectedRepos.length === 1 ? "" : "s"} selecionado{selectedRepos.length === 1 ? "" : "s"} (seleção alterada).
+              </span>
+              <button
+                type="button"
+                onClick={() => void fetchReport(undefined, selectedRepos)}
+                disabled={loading}
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-none border border-accent bg-accent/20 px-2.5 py-0.5 font-mono text-xs text-accent font-medium hover:bg-accent/30 transition-colors disabled:opacity-50 shrink-0"
+              >
+                {loading ? <Loader2 size={11} className="animate-spin" /> : <Sparkles size={11} />}
+                <span>{loading ? "Compilando…" : "Atualizar agora →"}</span>
+              </button>
             </div>
           )}
 
@@ -395,7 +435,7 @@ export default function DailyReportModal({
                 <button
                   type="button"
                   onClick={() => void fetchReport()}
-                  disabled={loading || selectedRepos.length === 0}
+                  disabled={loading || isRepoSelectionEmpty}
                   className="mt-2 inline-flex cursor-pointer items-center gap-1.5 border border-accent bg-accent/20 px-4 py-2 font-mono text-xs text-accent hover:bg-accent/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Sparkles size={13} />
@@ -411,21 +451,27 @@ export default function DailyReportModal({
               <button
                 type="button"
                 onClick={() => void fetchReport()}
-                disabled={loading || selectedRepos.length === 0}
+                disabled={loading || isRepoSelectionEmpty}
                 className={`inline-flex cursor-pointer items-center gap-1.5 rounded-none border px-3 py-1.5 font-mono text-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
-                  report
+                  report && !isDirty
                     ? "border-zinc-800 bg-surface text-foreground hover:border-accent hover:text-accent"
                     : "border-accent bg-accent/20 text-accent font-medium hover:bg-accent/30"
                 }`}
               >
                 {loading ? (
                   <RefreshCw size={13} className="animate-spin" />
-                ) : report ? (
+                ) : report && !isDirty ? (
                   <RefreshCw size={13} />
                 ) : (
                   <Sparkles size={13} />
                 )}
-                {report ? "Regenerar" : "Gerar Report"}
+                {isRepoSelectionEmpty
+                  ? "Selecione um projeto"
+                  : report && isDirty
+                    ? "Atualizar Report"
+                    : report
+                      ? "Regenerar"
+                      : "Gerar Report"}
               </button>
             </div>
 
