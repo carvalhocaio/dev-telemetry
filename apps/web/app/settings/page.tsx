@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, Check, Loader2 } from "lucide-react";
+import { ArrowRight, Check, ExternalLink, Loader2 } from "lucide-react";
 import CustomSelect from "@/components/CustomSelect";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -335,7 +335,19 @@ export default function SettingsPage() {
       {/* PAT section */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="font-mono text-xs uppercase tracking-wider text-muted">GitHub PAT</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="font-mono text-xs uppercase tracking-wider text-muted">GitHub PAT</h2>
+            <a
+              href="https://github.com/settings/tokens/new?scopes=read:user,public_repo,repo,read:org&description=dev-telemetry"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 font-mono text-[11px] text-accent hover:underline decoration-accent/60 underline-offset-2 transition-colors"
+              title="Gerar token no GitHub com os escopos necessários pré-selecionados"
+            >
+              gerar token no GitHub
+              <ExternalLink size={11} aria-hidden="true" />
+            </a>
+          </div>
           {config?.hasPat && (
             <span className="flex items-center gap-1 font-mono text-[10px] text-accent-dim">
               <Check size={10} /> configurado
@@ -430,7 +442,45 @@ export default function SettingsPage() {
       {/* LLM section */}
       <section className="space-y-3 border-t border-border pt-6">
         <div className="flex items-center justify-between">
-          <h2 className="font-mono text-xs uppercase tracking-wider text-muted">Provedor LLM</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="font-mono text-xs uppercase tracking-wider text-muted">Provedor LLM</h2>
+            {provider === "gemini" && (
+              <a
+                href="https://aistudio.google.com/app/apikey"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 font-mono text-[11px] text-accent hover:underline decoration-accent/60 underline-offset-2 transition-colors"
+                title="Obter chave no Google AI Studio"
+              >
+                obter chave (Google AI Studio)
+                <ExternalLink size={11} aria-hidden="true" />
+              </a>
+            )}
+            {provider === "openai" && (
+              <a
+                href="https://platform.openai.com/api-keys"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 font-mono text-[11px] text-accent hover:underline decoration-accent/60 underline-offset-2 transition-colors"
+                title="Obter chave na OpenAI"
+              >
+                obter chave (OpenAI)
+                <ExternalLink size={11} aria-hidden="true" />
+              </a>
+            )}
+            {provider === "anthropic" && (
+              <a
+                href="https://console.anthropic.com/settings/keys"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 font-mono text-[11px] text-accent hover:underline decoration-accent/60 underline-offset-2 transition-colors"
+                title="Obter chave na Anthropic"
+              >
+                obter chave (Anthropic)
+                <ExternalLink size={11} aria-hidden="true" />
+              </a>
+            )}
+          </div>
           {config?.hasLlmKey && (
             <span className="flex items-center gap-1 font-mono text-[10px] text-accent-dim">
               <Check size={10} /> configurado · {config.llmProvider} / {config.llmModel}
