@@ -55,8 +55,22 @@ export default function ModeSelector({ current, customValue }: ModeSelectorProps
     initialEnd ?? initialStart ?? new Date(),
   );
 
-  // Reset calendar selection when switching away from custom mode
-  useEffect(() => {
+  // Reset calendar selection during render when switching away from custom mode
+  const [prevSync, setPrevSync] = useState({
+    current,
+    start: customValue?.start,
+    end: customValue?.end,
+  });
+  if (
+    prevSync.current !== current ||
+    prevSync.start !== customValue?.start ||
+    prevSync.end !== customValue?.end
+  ) {
+    setPrevSync({
+      current,
+      start: customValue?.start,
+      end: customValue?.end,
+    });
     if (current !== "custom") {
       setDateRange(undefined);
       setDisplayMonth(new Date());
@@ -67,7 +81,7 @@ export default function ModeSelector({ current, customValue }: ModeSelectorProps
       });
       setDisplayMonth(new Date(customValue.end));
     }
-  }, [current, customValue?.start, customValue?.end]);
+  }
 
   const isCustom = current === "custom";
 

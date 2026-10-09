@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { AlertCircle, Check, Clipboard, Loader2, RefreshCw, Sparkles, X } from "lucide-react";
 import type { ExecutiveReport } from "@dev-telemetry/ai";
@@ -37,20 +37,44 @@ export default function DailyReportModal({
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState(false);
 
-  const [reposList, setReposList] = useState<string[]>(availableRepos ?? []);
-  const [selectedRepos, setSelectedRepos] = useState<string[]>(availableRepos ?? []);
-  const [lastGeneratedRepos, setLastGeneratedRepos] = useState<string[] | null>(null);
+  const [discoveredRepos, setDiscoveredRepos] = useState<string[]>([]);
+  const reposList =
+    availableRepos && availableRepos.length > 0
+      ? availableRepos
+      : discoveredRepos;
 
-  const selectedReposRef = useRef(selectedRepos);
-  selectedReposRef.current = selectedRepos;
+  const [selectedRepos, setSelectedRepos] = useState<string[]>(
+    availableRepos ?? [],
+  );
+  const [lastGeneratedRepos, setLastGeneratedRepos] = useState<string[] | null>(
+    null,
+  );
 
-  // Sync availableRepos prop when it changes
-  useEffect(() => {
-    if (availableRepos && availableRepos.length > 0) {
-      setReposList(availableRepos);
-      setSelectedRepos(availableRepos);
+  // Reset modal state during render when props change
+  const [prevProps, setPrevProps] = useState({
+    isOpen,
+    startDate,
+    endDate,
+    availableRepos,
+  });
+
+  if (
+    prevProps.isOpen !== isOpen ||
+    prevProps.startDate !== startDate ||
+    prevProps.endDate !== endDate ||
+    prevProps.availableRepos !== availableRepos
+  ) {
+    setPrevProps({ isOpen, startDate, endDate, availableRepos });
+    if (!isOpen) {
+      setReport(null);
+      setError(null);
+      setCopied(false);
+      setCopyError(false);
+      setLastGeneratedRepos(null);
+    } else {
+      setSelectedRepos(availableRepos ?? []);
     }
-  }, [availableRepos]);
+  }
 
   // Discover repos if not provided
   useEffect(() => {
@@ -60,7 +84,7 @@ export default function DailyReportModal({
       .then((r) => (r.ok ? r.json() : null))
       .then((data: { totals?: { repositories?: string[] } } | null) => {
         if (data?.totals?.repositories && data.totals.repositories.length > 0) {
-          setReposList(data.totals.repositories);
+          setDiscoveredRepos(data.totals.repositories);
           setSelectedRepos(data.totals.repositories);
         }
       })
@@ -70,7 +94,7 @@ export default function DailyReportModal({
   const fetchReport = useCallback(
     async (signal?: AbortSignal, reposOverride?: string[]) => {
       if (!startDate || !endDate) return;
-      const activeRepos = reposOverride ?? selectedReposRef.current;
+      const activeRepos = reposOverride ?? selectedRepos;
       if (reposList.length > 0 && activeRepos.length === 0) {
         setError("Nenhum projeto selecionado. Marque ao menos um projeto acima para incluir no relatório.");
         return;
@@ -117,22 +141,17 @@ export default function DailyReportModal({
         setLoading(false);
       }
     },
-    [startDate, endDate, scope],
+    [startDate, endDate, scope, selectedRepos, reposList.length],
   );
 
   useEffect(() => {
-    if (isOpen) {
-      const controller = new AbortController();
-      void fetchReport(controller.signal);
-      return () => controller.abort();
-    } else {
-      setReport(null);
-      setError(null);
-      setCopied(false);
-      setCopyError(false);
-      setLastGeneratedRepos(null);
-    }
-  }, [isOpen, fetchReport]);
+    if (!isOpen) return;
+    const controller = new AbortController();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void fetchReport(controller.signal, availableRepos ?? []);
+    return () => controller.abort();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, startDate, endDate]);
 
   useEffect(() => {
     if (!isOpen) return;
