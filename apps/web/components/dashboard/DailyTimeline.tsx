@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { ChevronDown, ExternalLink, GitCommit, GitPullRequest, Sparkles } from "lucide-react";
 import { useDailyActivity } from "@/hooks/useDailyActivity";
 import { useReportRefetch } from "@/hooks/useReportRefetch";
+import CountUp from "@/components/ui/CountUp";
 import DailyReportModal from "./DailyReportModal";
 
 export interface DailyTimelineProps {
@@ -113,27 +114,40 @@ export default function DailyTimeline({ start, end, scope }: DailyTimelineProps)
       {data?.totals && (
         <div className="flex flex-wrap items-center justify-between gap-3 border border-zinc-800 bg-surface/40 px-4 py-3 font-mono text-xs text-muted">
           <div>
-            <span className="text-foreground font-semibold">{data.totals.daysCount}</span>{" "}
+            <span className="text-foreground font-semibold">
+              <CountUp to={data.totals.daysCount} />
+            </span>{" "}
             {data.totals.daysCount === 1 ? "dia com atividade" : "dias com atividade"}
           </div>
           <div className="flex flex-wrap items-center gap-4">
             <span>
-              <strong className="text-foreground">{data.totals.commitsCount}</strong> commits
+              <strong className="text-foreground">
+                <CountUp to={data.totals.commitsCount} />
+              </strong>{" "}
+              commits
             </span>
             <span>
-              <strong className="text-foreground">{data.totals.prsCreated}</strong>{" "}
+              <strong className="text-foreground">
+                <CountUp to={data.totals.prsCreated} />
+              </strong>{" "}
               {data.totals.prsCreated === 1 ? "PR" : "PRs"}
               {data.totals.prsMerged > 0 && (
                 <span className="ml-1 text-[11px] text-muted">
-                  ({data.totals.prsMerged} {data.totals.prsMerged === 1 ? "mergeado" : "mergeados"})
+                  (<CountUp to={data.totals.prsMerged} /> {data.totals.prsMerged === 1 ? "mergeado" : "mergeados"})
                 </span>
               )}
             </span>
             <span>
-              <strong className="text-foreground">{data.totals.churn.toLocaleString()}</strong> churn
+              <strong className="text-foreground">
+                <CountUp to={data.totals.churn} />
+              </strong>{" "}
+              churn
             </span>
             <span>
-              <strong className="text-foreground">{data.totals.repositories.length}</strong> repos
+              <strong className="text-foreground">
+                <CountUp to={data.totals.repositories.length} />
+              </strong>{" "}
+              repos
             </span>
           </div>
         </div>
@@ -192,11 +206,11 @@ export default function DailyTimeline({ start, end, scope }: DailyTimelineProps)
 
                   {/* Churn Badge */}
                   <span className="inline-flex items-center gap-1 rounded-none border border-zinc-700 bg-zinc-800/40 px-2 py-0.5 font-mono text-xs text-foreground/90">
-                    <span>{day.churn.toLocaleString()} churn</span>
+                    <span>{day.churn.toLocaleString("pt-BR")} churn</span>
                     <span className="text-[11px] font-medium ml-1">
-                      <span className="text-emerald-500">+{additions}</span>
+                      <span className="text-emerald-500">+{additions.toLocaleString("pt-BR")}</span>
                       <span className="text-muted mx-0.5">/</span>
-                      <span className="text-rose-500">-{deletions}</span>
+                      <span className="text-rose-500">-{deletions.toLocaleString("pt-BR")}</span>
                     </span>
                   </span>
 
