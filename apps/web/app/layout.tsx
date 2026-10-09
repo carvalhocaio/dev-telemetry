@@ -1,14 +1,9 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import { JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
 import Footer from "@/components/Footer";
 import NavBar from "@/components/layout/NavBar";
-
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-display",
-  subsets: ["latin"],
-});
 
 const jetBrainsMono = JetBrains_Mono({
   variable: "--font-mono",
@@ -18,21 +13,22 @@ const jetBrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   title: {
     template: "%s · dev-telemetry",
-    default: "dev-telemetry — telemetria para devs",
+    default: "dev-telemetry — relatórios diários e linha do tempo de atividade",
   },
   description:
-    "Painel pessoal de performance técnica: commits, PRs e análise de produtividade com IA.",
+    "Linha do tempo diária de atividades de engenharia e geração de relatórios executivos com IA.",
   applicationName: "dev-telemetry",
   openGraph: {
     type: "website",
-    title: "dev-telemetry — telemetria para devs",
+    title: "dev-telemetry — relatórios diários e linha do tempo de atividade",
     description:
-      "Painel pessoal de performance técnica: commits, PRs e análise de produtividade com IA.",
+      "Linha do tempo diária de atividades de engenharia e geração de relatórios executivos com IA.",
   },
   twitter: {
     card: "summary",
     title: "dev-telemetry",
-    description: "Painel pessoal de performance técnica com análise IA.",
+    description:
+      "Linha do tempo diária de atividades de engenharia e geração de relatórios executivos com IA.",
   },
 };
 
@@ -44,7 +40,7 @@ export default function RootLayout({
   return (
     <html
       lang="pt-BR"
-      className={`${spaceGrotesk.variable} ${jetBrainsMono.variable} h-full antialiased`}
+      className={`dark ${jetBrainsMono.variable} font-sans h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <NavBar />
