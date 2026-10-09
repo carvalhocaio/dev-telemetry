@@ -14,25 +14,7 @@ describe("GenerateReportButton", () => {
     global.fetch = originalFetch;
   });
 
-  it("renders trigger button and toggles dropdown on click", () => {
-    render(<GenerateReportButton scope="all" />);
-
-    const button = screen.getByText("Gerar Report");
-    expect(button).toBeDefined();
-
-    // Dropdown initially closed
-    expect(screen.queryByRole("menu")).toBeNull();
-
-    // Open dropdown
-    fireEvent.click(button);
-    expect(screen.getByRole("menu")).toBeDefined();
-    expect(screen.getByText("Hoje")).toBeDefined();
-    expect(screen.getByText("Ontem")).toBeDefined();
-    expect(screen.getByText("Últimos 7 dias")).toBeDefined();
-    expect(screen.getByText("Últimos 30 dias")).toBeDefined();
-  });
-
-  it("selecting an option opens DailyReportModal with selected dates", async () => {
+  it("renders trigger button and opens DailyReportModal directly on click", async () => {
     global.fetch = vi.fn().mockResolvedValue({
       ok: true,
       json: async () => ({
@@ -43,16 +25,23 @@ describe("GenerateReportButton", () => {
       }),
     } as unknown as Response);
 
-    render(<GenerateReportButton scope="all" />);
+    render(
+      <GenerateReportButton
+        scope="all"
+        filterStart="2026-10-03"
+        filterEnd="2026-10-09"
+      />,
+    );
 
-    // Open dropdown
-    fireEvent.click(screen.getByText("Gerar Report"));
+    const button = screen.getByText("Gerar Report");
+    expect(button).toBeDefined();
 
-    // Select "Últimos 7 dias"
-    const last7Btn = screen.getByText("Últimos 7 dias");
-    fireEvent.click(last7Btn);
+    // Modal dialog initially closed
+    expect(screen.queryByRole("dialog")).toBeNull();
 
-    // Modal dialog should open
+    // Click button opens modal directly for the filter period
+    fireEvent.click(button);
+
     await waitFor(() => {
       expect(screen.getByRole("dialog")).toBeDefined();
     });
