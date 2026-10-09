@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { format } from "date-fns";
@@ -54,6 +54,20 @@ export default function ModeSelector({ current, customValue }: ModeSelectorProps
   const [displayMonth, setDisplayMonth] = useState<Date>(
     initialEnd ?? initialStart ?? new Date(),
   );
+
+  // Reset calendar selection when switching away from custom mode
+  useEffect(() => {
+    if (current !== "custom") {
+      setDateRange(undefined);
+      setDisplayMonth(new Date());
+    } else if (customValue?.start && customValue?.end) {
+      setDateRange({
+        from: new Date(customValue.start),
+        to: new Date(customValue.end),
+      });
+      setDisplayMonth(new Date(customValue.end));
+    }
+  }, [current, customValue?.start, customValue?.end]);
 
   const isCustom = current === "custom";
 
@@ -128,26 +142,17 @@ export default function ModeSelector({ current, customValue }: ModeSelectorProps
             showOutsideDays={false}
           />
           <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-zinc-800/80 pt-2">
-            <span className="font-mono text-[11px] text-muted truncate max-w-[120px]">
+            <span className="font-mono text-[11px] text-muted truncate max-w-[170px]">
               {rangePreview}
             </span>
-            <div className="flex items-center gap-1.5 shrink-0">
-              <button
-                type="button"
-                onClick={() => setCalendarOpen(false)}
-                className="cursor-pointer rounded-none border border-zinc-800 bg-surface px-2 py-0.5 font-mono text-xs text-muted hover:text-foreground transition-colors"
-              >
-                Fechar
-              </button>
-              <button
-                type="button"
-                onClick={handleApplyCustom}
-                disabled={!canApply}
-                className="cursor-pointer rounded-none border border-accent bg-accent/20 px-2.5 py-0.5 font-mono text-xs text-accent font-medium hover:bg-accent/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Aplicar
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleApplyCustom}
+              disabled={!canApply}
+              className="cursor-pointer rounded-none border border-accent bg-accent/20 px-3 py-1 font-mono text-xs text-accent font-medium hover:bg-accent/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0"
+            >
+              Aplicar
+            </button>
           </div>
         </PopoverContent>
       </Popover>
@@ -161,6 +166,7 @@ export default function ModeSelector({ current, customValue }: ModeSelectorProps
           <Link
             key={mode}
             href={modeHref(mode)}
+            onClick={() => setDateRange(undefined)}
             aria-current={active ? "true" : undefined}
             className={`rounded-none px-3 py-1 transition-colors outline-none focus-visible:ring-1 focus-visible:ring-accent ${
               active

@@ -8,7 +8,7 @@ import type { DropdownProps } from "react-day-picker";
 import { cn } from "@/lib/utils";
 
 const NAV_BTN =
-  "size-8 flex items-center justify-center rounded border border-transparent text-muted transition-colors hover:border-surface hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent";
+  "size-7 flex cursor-pointer items-center justify-center rounded-none border border-transparent text-muted transition-colors hover:border-zinc-800 hover:bg-surface/60 hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent";
 
 function TerminalDropdown({ value, onChange, options }: DropdownProps) {
   return (
