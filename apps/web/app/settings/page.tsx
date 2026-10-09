@@ -8,7 +8,6 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useSession } from "@/lib/auth-client";
 
-const QUOTA_BYTES = 3 * 1024 * 1024 * 1024;
 const LLM_PROVIDERS = ["gemini", "openai", "anthropic"] as const;
 type LlmProvider = (typeof LLM_PROVIDERS)[number];
 
@@ -38,12 +37,6 @@ interface SyncJob {
   error: string | null;
   currentRepo: string | null;
   startedAt: string | null;
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 }
 
 function terminalBar(value: number, total: number, width = 20): string {
@@ -248,9 +241,6 @@ export default function SettingsPage() {
 
   if (sessionPending || !session) return null;
 
-  const bytesUsed = config?.bytesUsed ?? 0;
-  const usedPct = Math.min((bytesUsed / QUOTA_BYTES) * 100, 100).toFixed(1);
-
   return (
     <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-8 sm:px-6">
       {/* heading */}
@@ -400,28 +390,6 @@ export default function SettingsPage() {
         {llmError && (
           <p className="font-mono text-xs text-alert">{llmError}</p>
         )}
-      </section>
-
-      {/* Storage meter */}
-      <section className="space-y-2 border-t border-border pt-6">
-        <h2 className="font-mono text-xs uppercase tracking-wider text-muted">Armazenamento</h2>
-        <div className="rounded border border-border bg-surface p-4 font-mono text-xs space-y-1">
-          <div className="flex w-full items-center gap-2 text-muted">
-            <span>[</span>
-            <div className="relative h-1.5 flex-1 overflow-hidden rounded-sm bg-border/20">
-              <div
-                className="absolute inset-y-0 left-0 bg-accent transition-all"
-                style={{ width: `${usedPct}%` }}
-              />
-            </div>
-            <span>]</span>
-            <span className="ml-1 text-foreground">{usedPct}%</span>
-          </div>
-          <p className="text-muted">
-            {formatBytes(bytesUsed)}{" "}
-            <span className="text-muted/50">/ {formatBytes(QUOTA_BYTES)}</span>
-          </p>
-        </div>
       </section>
 
       {/* Sync section */}
