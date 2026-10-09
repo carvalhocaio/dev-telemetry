@@ -116,7 +116,7 @@ export default function ModeSelector({ current, customValue }: ModeSelectorProps
           />
         </PopoverTrigger>
 
-        <PopoverContent className="p-3 bg-surface/95 border-zinc-800" align="start">
+        <PopoverContent className="p-3 bg-surface/95 border-zinc-800 w-[270px]" align="start">
           <Calendar
             mode="range"
             selected={dateRange}
@@ -127,15 +127,15 @@ export default function ModeSelector({ current, customValue }: ModeSelectorProps
             onMonthChange={setDisplayMonth}
             showOutsideDays={false}
           />
-          <div className="mt-3 flex items-center justify-between gap-3 border-t border-zinc-800/80 pt-2.5">
-            <span className="font-mono text-[11px] text-muted truncate max-w-[170px]">
+          <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-zinc-800/80 pt-2">
+            <span className="font-mono text-[11px] text-muted truncate max-w-[120px]">
               {rangePreview}
             </span>
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex items-center gap-1.5 shrink-0">
               <button
                 type="button"
                 onClick={() => setCalendarOpen(false)}
-                className="cursor-pointer rounded-none border border-zinc-800 bg-surface px-2.5 py-1 font-mono text-xs text-muted hover:text-foreground transition-colors"
+                className="cursor-pointer rounded-none border border-zinc-800 bg-surface px-2 py-0.5 font-mono text-xs text-muted hover:text-foreground transition-colors"
               >
                 Fechar
               </button>
@@ -143,7 +143,7 @@ export default function ModeSelector({ current, customValue }: ModeSelectorProps
                 type="button"
                 onClick={handleApplyCustom}
                 disabled={!canApply}
-                className="cursor-pointer rounded-none border border-accent bg-accent/20 px-3 py-1 font-mono text-xs text-accent font-medium hover:bg-accent/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="cursor-pointer rounded-none border border-accent bg-accent/20 px-2.5 py-0.5 font-mono text-xs text-accent font-medium hover:bg-accent/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Aplicar
               </button>

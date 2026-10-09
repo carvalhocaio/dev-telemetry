@@ -37,14 +37,19 @@ function Calendar({
     button_next: NAV_BTN,
     button_previous: NAV_BTN,
     caption_label: "font-mono text-xs font-medium uppercase tracking-wider text-foreground",
-    day: "group size-8 px-0 py-px text-sm",
-    day_button:
-      "relative flex size-8 items-center justify-center whitespace-nowrap rounded-none font-mono text-xs text-foreground duration-100 outline-none focus-visible:ring-1 focus-visible:ring-accent hover:not-in-data-selected:bg-surface/80 hover:not-in-data-selected:text-foreground group-data-selected:bg-accent group-data-selected:text-primary-foreground group-[.range-middle]:bg-accent/20 group-[.range-middle]:text-accent group-[.range-start]:bg-accent group-[.range-start]:text-primary-foreground group-[.range-start]:font-bold group-[.range-end]:bg-accent group-[.range-end]:text-primary-foreground group-[.range-end]:font-bold group-data-disabled:text-muted/30 group-data-disabled:line-through group-data-outside:text-muted/40",
-    hidden: "invisible",
-    month: "w-full",
-    month_caption: "relative mx-10 mb-1 flex h-8 items-center justify-center z-20",
+    month: "w-full space-y-2",
+    month_grid: "w-full border-collapse table-fixed",
+    month_caption: "relative mx-10 mb-2 flex h-8 items-center justify-center z-20",
     months: "relative flex flex-col sm:flex-row gap-4",
     nav: "absolute top-0 flex w-full justify-between z-10",
+    weekdays: "table-row",
+    weekday: "p-0 text-center font-mono text-[10px] uppercase text-muted h-7",
+    weeks: "table-row-group",
+    week: "table-row",
+    day: "p-0 text-center align-middle h-8",
+    day_button:
+      "relative mx-auto flex size-8 items-center justify-center whitespace-nowrap rounded-none font-mono text-xs text-foreground duration-100 outline-none focus-visible:ring-1 focus-visible:ring-accent hover:not-in-data-selected:bg-surface/80 hover:not-in-data-selected:text-foreground group-data-selected:bg-accent group-data-selected:text-primary-foreground group-[.range-middle]:bg-accent/20 group-[.range-middle]:text-accent group-[.range-start]:bg-accent group-[.range-start]:text-primary-foreground group-[.range-start]:font-bold group-[.range-end]:bg-accent group-[.range-end]:text-primary-foreground group-[.range-end]:font-bold group-data-disabled:text-muted/30 group-data-disabled:line-through group-data-outside:text-muted/40",
+    hidden: "invisible",
     outside: "text-muted/40",
     range_end: "range-end",
     range_middle: "range-middle",
@@ -52,7 +57,6 @@ function Calendar({
     today:
       "*:after:pointer-events-none *:after:absolute *:after:bottom-1 *:after:start-1/2 *:after:size-[3px] *:after:-translate-x-1/2 *:after:rounded-none *:after:bg-accent [&[data-selected]>*]:after:bg-primary-foreground",
     week_number: "size-8 p-0 font-mono text-[10px] text-muted",
-    weekday: "size-8 p-0 font-mono text-[10px] uppercase text-muted",
     dropdowns: "flex items-center gap-2",
   };
 
