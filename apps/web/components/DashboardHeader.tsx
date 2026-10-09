@@ -6,15 +6,29 @@ import { useRouter, useSearchParams } from "next/navigation";
 import GenerateReportButton from "@/components/dashboard/GenerateReportButton";
 import SyncButton from "@/components/SyncButton";
 import { signOut } from "@/lib/auth-client";
-import { resolveMode } from "@/lib/range";
-import { isScope, type Scope } from "@/types/report";
+import { resolveMode, resolveRange, type CustomRange } from "@/lib/range";
+import { isGranularity, isScope, type Scope } from "@/types/report";
+
+function readCustom(searchParams: URLSearchParams): CustomRange | undefined {
+  const res = searchParams.get("res");
+  const start = searchParams.get("start");
+  const end = searchParams.get("end");
+  if (res && isGranularity(res) && start && end) {
+    return { res, start, end };
+  }
+  return undefined;
+}
 
 export default function DashboardHeader() {
   const searchParams = useSearchParams();
   const rawScope = searchParams.get("scope");
   const scope: Scope = isScope(rawScope) ? rawScope : "all";
-  const filterStart = searchParams.get("start") ?? undefined;
-  const filterEnd = searchParams.get("end") ?? undefined;
+  const mode = resolveMode(searchParams.get("mode"));
+  const custom = readCustom(searchParams);
+
+  const range = resolveRange(mode, custom, new Date());
+  const filterStart = range.start;
+  const filterEnd = range.end;
 
   async function handleSignOut() {
     await signOut();

@@ -121,10 +121,13 @@ export default function DailyTimeline({ start, end, scope }: DailyTimelineProps)
               <strong className="text-foreground">{data.totals.commitsCount}</strong> commits
             </span>
             <span>
-              <strong className="text-foreground">{data.totals.prsCreated + data.totals.prsMerged}</strong> PRs
-              <span className="ml-1 text-[11px] text-muted/70">
-                ({data.totals.prsCreated} criados, {data.totals.prsMerged} mergeados)
-              </span>
+              <strong className="text-foreground">{data.totals.prsCreated}</strong>{" "}
+              {data.totals.prsCreated === 1 ? "PR" : "PRs"}
+              {data.totals.prsMerged > 0 && (
+                <span className="ml-1 text-[11px] text-muted">
+                  ({data.totals.prsMerged} {data.totals.prsMerged === 1 ? "mergeado" : "mergeados"})
+                </span>
+              )}
             </span>
             <span>
               <strong className="text-foreground">{data.totals.churn.toLocaleString()}</strong> churn
@@ -142,7 +145,7 @@ export default function DailyTimeline({ start, end, scope }: DailyTimelineProps)
           const isExpanded = expandedDays.has(day.date);
           const additions = day.commits.reduce((sum, c) => sum + c.additions, 0);
           const deletions = day.commits.reduce((sum, c) => sum + c.deletions, 0);
-          const totalPrs = day.prs.length;
+          const dayPrCount = Math.max(day.prsCreated, day.prsMerged, day.prs.length);
 
           return (
             <div
@@ -179,11 +182,12 @@ export default function DailyTimeline({ start, end, scope }: DailyTimelineProps)
                   {/* PRs Badge */}
                   <span className="inline-flex items-center gap-1.5 rounded-none border border-zinc-700 bg-zinc-800/40 px-2 py-0.5 font-mono text-xs text-foreground/90">
                     <GitPullRequest size={11} className="text-muted-foreground" />
-                    <span>{totalPrs} PRs</span>
-                    <span className="text-muted text-[11px]">
-                      ({day.prsCreated} {day.prsCreated === 1 ? "criado" : "criados"}, {day.prsMerged}{" "}
-                      {day.prsMerged === 1 ? "mergeado" : "mergeados"})
-                    </span>
+                    <span>{dayPrCount} {dayPrCount === 1 ? "PR" : "PRs"}</span>
+                    {day.prsMerged > 0 && (
+                      <span className="text-muted text-[11px]">
+                        ({day.prsMerged} {day.prsMerged === 1 ? "mergeado" : "mergeados"})
+                      </span>
+                    )}
                   </span>
 
                   {/* Churn Badge */}

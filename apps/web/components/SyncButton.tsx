@@ -49,6 +49,7 @@ export default function SyncButton() {
       let batches = 0;
       const MAX_BATCHES = 500;
       while (!done && batches < MAX_BATCHES) {
+        await new Promise((r) => setTimeout(r, 300));
         const batchRes = await fetch(`/api/sync/batch/${jobId}`, {
           method: "POST",
           credentials: "include",
@@ -63,21 +64,17 @@ export default function SyncButton() {
 
       setStatus("success");
       trigger();
+      setTimeout(() => setStatus("idle"), 3000);
     } catch (err) {
       console.error("[SyncButton]", err);
       setStatus("error");
       if (err instanceof Error) setSyncError(err.message);
+      setTimeout(() => {
+        setStatus("idle");
+        setSyncError(null);
+      }, 5000);
     }
   }
-
-  const message =
-    status === "loading"
-      ? "Sincronizando…"
-      : status === "success"
-        ? "Atualizado."
-        : status === "error"
-          ? syncError ?? "Falha ao sincronizar."
-          : "";
 
   return (
     <div className="flex items-center gap-2">
@@ -86,21 +83,24 @@ export default function SyncButton() {
         onClick={handleSync}
         disabled={status === "loading"}
         aria-busy={status === "loading"}
-        className="inline-flex items-center gap-2 rounded-md border border-surface bg-surface/40 px-3 py-1 font-mono text-xs text-foreground transition-colors hover:border-accent disabled:opacity-60"
+        className="inline-flex cursor-pointer items-center gap-2 rounded-none border border-zinc-800 bg-surface/40 px-3 py-1 font-mono text-xs text-foreground transition-colors hover:border-accent hover:text-accent disabled:opacity-60"
       >
         <RefreshCw
-          size={14}
-          className={status === "loading" ? "animate-spin" : ""}
+          size={13}
+          className={status === "loading" ? "animate-spin text-accent" : ""}
           aria-hidden="true"
         />
-        Sync
+        <span>Sync</span>
       </button>
-      <span
-        aria-live="polite"
-        className={`font-mono text-xs ${status === "error" ? "text-level-abaixo" : "text-muted"}`}
-      >
-        {message}
-      </span>
+      {status === "error" && (
+        <span
+          aria-live="polite"
+          className="font-mono text-xs text-alert truncate max-w-[200px]"
+          title={syncError ?? "Falha ao sincronizar."}
+        >
+          {syncError ?? "Falha ao sincronizar."}
+        </span>
+      )}
     </div>
   );
 }

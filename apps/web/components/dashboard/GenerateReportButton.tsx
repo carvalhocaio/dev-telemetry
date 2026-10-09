@@ -97,7 +97,19 @@ export default function GenerateReportButton({
   const last7Iso = shiftDays(todayIso, -6);
   const last30Iso = shiftDays(todayIso, -29);
 
-  const options: RangeOption[] = [
+  const options: RangeOption[] = [];
+
+  if (filterStart && filterEnd) {
+    options.push({
+      id: "filter",
+      label: "Período do filtro (ativo)",
+      subtitle: `${formatPtBr(filterStart)} a ${formatPtBr(filterEnd)}`,
+      startDate: filterStart,
+      endDate: filterEnd,
+    });
+  }
+
+  options.push(
     {
       id: "today",
       label: "Hoje",
@@ -126,22 +138,7 @@ export default function GenerateReportButton({
       startDate: last30Iso,
       endDate: todayIso,
     },
-  ];
-
-  if (filterStart && filterEnd) {
-    const isDuplicate = options.some(
-      (opt) => opt.startDate === filterStart && opt.endDate === filterEnd,
-    );
-    if (!isDuplicate) {
-      options.push({
-        id: "filter",
-        label: "Período do filtro",
-        subtitle: `${formatPtBr(filterStart)} a ${formatPtBr(filterEnd)}`,
-        startDate: filterStart,
-        endDate: filterEnd,
-      });
-    }
-  }
+  );
 
   function handleSelectOption(option: RangeOption) {
     setSelectedRange({
@@ -158,7 +155,7 @@ export default function GenerateReportButton({
         onClick={() => setDropdownOpen((prev) => !prev)}
         aria-haspopup="true"
         aria-expanded={dropdownOpen}
-        className="inline-flex cursor-pointer items-center gap-1.5 rounded-none border border-zinc-700 bg-surface/60 px-3 py-1 font-mono text-xs text-foreground transition-colors hover:border-accent hover:text-accent"
+        className="inline-flex cursor-pointer items-center gap-1.5 rounded-none border border-zinc-700 bg-surface/60 px-3 py-1 font-mono text-xs text-foreground transition-colors hover:border-accent hover:text-accent select-none"
       >
         <Sparkles size={13} className="text-accent" aria-hidden="true" />
         <span>Gerar Report</span>
@@ -173,7 +170,7 @@ export default function GenerateReportButton({
         <div
           role="menu"
           aria-orientation="vertical"
-          className="absolute right-0 top-full mt-1.5 z-40 w-56 rounded-none border border-zinc-800 bg-background shadow-2xl py-1 divide-y divide-zinc-800/40"
+          className="absolute right-0 top-full mt-1.5 z-40 w-64 rounded-none border border-zinc-800 bg-background shadow-2xl py-1 divide-y divide-zinc-800/40"
         >
           <div className="px-3 py-1.5">
             <span className="font-mono text-[10px] uppercase tracking-wider text-muted">
@@ -186,13 +183,29 @@ export default function GenerateReportButton({
               <button
                 key={option.id}
                 type="button"
-                role="menuitem"
                 onClick={() => handleSelectOption(option)}
-                className="w-full cursor-pointer px-3 py-2 text-left transition-colors hover:bg-surface/80 hover:text-accent flex flex-col gap-0.5 group"
+                className={`w-full cursor-pointer px-3 py-2 text-left transition-colors flex flex-col gap-0.5 group ${
+                  option.id === "filter"
+                    ? "bg-accent/10 border-l-2 border-accent hover:bg-accent/20"
+                    : "hover:bg-surface/80 hover:text-accent"
+                }`}
               >
-                <span className="font-mono text-xs text-foreground group-hover:text-accent font-medium">
-                  {option.label}
-                </span>
+                <div className="flex items-center justify-between">
+                  <span
+                    className={`font-mono text-xs font-medium ${
+                      option.id === "filter"
+                        ? "text-accent"
+                        : "text-foreground group-hover:text-accent"
+                    }`}
+                  >
+                    {option.label}
+                  </span>
+                  {option.id === "filter" && (
+                    <span className="font-mono text-[9px] uppercase px-1 border border-accent/40 text-accent bg-accent/10">
+                      ativo
+                    </span>
+                  )}
+                </div>
                 <span className="font-mono text-[10px] text-muted-foreground">
                   {option.subtitle}
                 </span>

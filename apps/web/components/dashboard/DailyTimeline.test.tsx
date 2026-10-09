@@ -116,7 +116,7 @@ describe("DailyTimeline", () => {
 
     // Check badges
     expect(screen.getByText(/3 commits/)).toBeDefined();
-    expect(screen.getByText(/1 PRs/)).toBeDefined();
+    expect(screen.getAllByText(/1 PR/).length).toBeGreaterThan(0);
     expect(screen.getByText(/450 churn/)).toBeDefined();
     expect(screen.getByText("+380")).toBeDefined();
     expect(screen.getByText("-70")).toBeDefined();
