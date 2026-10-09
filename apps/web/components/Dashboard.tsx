@@ -1,10 +1,8 @@
 "use client";
 
-import { SlidersHorizontal } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 
-import CustomRangeFilter from "@/components/CustomRangeFilter";
 import DailyTimeline from "@/components/dashboard/DailyTimeline";
 import ModeSelector from "@/components/ModeSelector";
 import {
@@ -34,8 +32,6 @@ export default function Dashboard() {
   const rawScope = searchParams.get("scope");
   const scope: Scope = isScope(rawScope) ? rawScope : "all";
 
-  const [filterOpen, setFilterOpen] = useState(mode === "custom");
-
   const customRes = custom?.res;
   const customStart = custom?.start;
   const customEnd = custom?.end;
@@ -57,31 +53,8 @@ export default function Dashboard() {
         <h2 className="font-melodrama text-xl font-bold tracking-tight text-foreground">
           Atividades Diárias
         </h2>
-        <div className="flex items-center gap-3">
-          <ModeSelector current={mode} />
-          <button
-            type="button"
-            onClick={() => setFilterOpen((open) => !open)}
-            aria-expanded={filterOpen}
-            aria-controls="custom-range-filter"
-            aria-label="Filtro de data personalizado"
-            title="Filtro de data personalizado"
-            className={`inline-flex items-center justify-center rounded-none border p-1.5 transition-colors hover:border-accent hover:text-foreground ${
-              mode === "custom"
-                ? "border-accent text-accent"
-                : "border-surface bg-surface/40 text-muted"
-            }`}
-          >
-            <SlidersHorizontal size={14} aria-hidden="true" />
-          </button>
-        </div>
+        <ModeSelector current={mode} customValue={custom} />
       </div>
-
-      {filterOpen && (
-        <div id="custom-range-filter" className="flex justify-end">
-          <CustomRangeFilter value={custom} onApply={() => setFilterOpen(false)} />
-        </div>
-      )}
 
       <DailyTimeline start={range.start} end={range.end} scope={scope} />
     </div>
