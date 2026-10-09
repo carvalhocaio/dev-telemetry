@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, lt } from "drizzle-orm";
 import { Elysia, t } from "elysia";
 import { db } from "@dev-telemetry/db/client";
 import { repository, syncJob, user, userSecret } from "@dev-telemetry/db/schema";
@@ -49,6 +49,21 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
         if (!s) return status(401);
 
         const userId = s.user.id;
+
+        // Auto-heal: Mark any job stuck in "running" with no update for > 10 minutes as error
+        const STALE_THRESHOLD_MS = 10 * 60 * 1000;
+        const staleCutoff = new Date(Date.now() - STALE_THRESHOLD_MS);
+
+        await db
+          .update(syncJob)
+          .set({ status: "error", error: "Sincronização interrompida (timeout)" })
+          .where(
+            and(
+              eq(syncJob.userId, userId),
+              eq(syncJob.status, "running"),
+              lt(syncJob.updatedAt, staleCutoff),
+            ),
+          );
 
         // Prevent concurrent sync jobs for the same user — avoids GitHub rate-limit exhaustion.
         const [running] = await db
