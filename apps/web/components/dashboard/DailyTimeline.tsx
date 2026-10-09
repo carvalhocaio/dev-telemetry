@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { ChevronDown, ExternalLink, GitCommit, GitPullRequest, Sparkles } from "lucide-react";
 import { useDailyActivity } from "@/hooks/useDailyActivity";
 import { useReportRefetch } from "@/hooks/useReportRefetch";
-import CountUp from "@/components/ui/CountUp";
 import DailyReportModal from "./DailyReportModal";
 
 export interface DailyTimelineProps {
@@ -114,40 +113,28 @@ export default function DailyTimeline({ start, end, scope }: DailyTimelineProps)
       {data?.totals && (
         <div className="flex flex-wrap items-center justify-between gap-3 border border-zinc-800 bg-surface/40 px-4 py-3 font-mono text-xs text-muted">
           <div>
-            <span className="text-foreground font-semibold">
-              <CountUp to={data.totals.daysCount} />
-            </span>{" "}
+            <span className="text-foreground font-semibold">{data.totals.daysCount}</span>{" "}
             {data.totals.daysCount === 1 ? "dia com atividade" : "dias com atividade"}
           </div>
           <div className="flex flex-wrap items-center gap-4">
             <span>
-              <strong className="text-foreground">
-                <CountUp to={data.totals.commitsCount} />
-              </strong>{" "}
+              <strong className="text-foreground">{data.totals.commitsCount.toLocaleString("pt-BR")}</strong>{" "}
               commits
             </span>
             <span>
-              <strong className="text-foreground">
-                <CountUp to={data.totals.prsCreated} />
-              </strong>{" "}
+              <strong className="text-foreground">{data.totals.prsCreated.toLocaleString("pt-BR")}</strong>{" "}
               {data.totals.prsCreated === 1 ? "PR" : "PRs"}
               {data.totals.prsMerged > 0 && (
                 <span className="ml-1 text-[11px] text-muted">
-                  (<CountUp to={data.totals.prsMerged} /> {data.totals.prsMerged === 1 ? "mergeado" : "mergeados"})
+                  ({data.totals.prsMerged.toLocaleString("pt-BR")} {data.totals.prsMerged === 1 ? "mergeado" : "mergeados"})
                 </span>
               )}
             </span>
             <span>
-              <strong className="text-foreground">
-                <CountUp to={data.totals.churn} />
-              </strong>{" "}
-              churn
+              <strong className="text-foreground">{data.totals.churn.toLocaleString("pt-BR")}</strong> churn
             </span>
             <span>
-              <strong className="text-foreground">
-                <CountUp to={data.totals.repositories.length} />
-              </strong>{" "}
-              repos
+              <strong className="text-foreground">{data.totals.repositories.length}</strong> repos
             </span>
           </div>
         </div>
