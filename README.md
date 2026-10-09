@@ -20,6 +20,13 @@ of their daily output and ready-to-send reports for managers and standups.
 - **Multi-LLM support** — Anthropic Claude, OpenAI GPT, and Google Gemini
 - **Responsive UI** — Shadcn Lyra preset with Melodrama editorial typography and sharp modern borders
 
+## Workflow
+
+1. **Daily Timeline** — Review your daily engineering output grouped chronologically with commits count, PRs (created vs. merged), and churn line stats.
+2. **"Gerar Daily"** — Click the sparkle icon on any day row to compile a concise daily report formatted for standups and manager syncs.
+3. **"Gerar Report"** — Click in the top bar to generate an executive report for the active window (Weekly, Monthly, All-time, or Custom Calendar Range).
+4. **Project Filtering** — Toggle which repositories to include or exclude directly in the report modal before generating or copying.
+
 ## Preview
 
 <img width="50%" height="50%" alt="Screenshot From 2026-06-11 13-13-47" src="https://github.com/user-attachments/assets/a8d7af6d-7d35-43ec-8df9-c5cfce95e029" />
@@ -35,7 +42,7 @@ of their daily output and ready-to-send reports for managers and standups.
 | API       | Elysia + Eden Treaty                    | Embedded in Next.js, type-safe end to end        |
 | Database  | PostgreSQL (Neon) + Drizzle ORM         | SQL-first, type-safe schema                      |
 | Auth      | Better-Auth 1.6                         | GitHub OAuth, session cookie                     |
-| AI        | Vercel AI SDK                           | Multi-provider narrative generation              |
+| AI        | Vercel AI SDK                           | Multi-provider executive reports & dailies       |
 | Crypto    | AES-256-GCM                             | Authenticated encryption for stored secrets      |
 
 ## Prerequisites
@@ -74,9 +81,9 @@ of their daily output and ready-to-send reports for managers and standups.
 | `GITHUB_CLIENT_ID`             | GitHub OAuth app client ID                    | Yes      |
 | `GITHUB_CLIENT_SECRET`         | GitHub OAuth app client secret                | Yes      |
 | `SECRET_ENCRYPTION_KEY`        | 32-byte hex key for AES-256-GCM               | Yes      |
-| `ANTHROPIC_API_KEY`            | Enables Claude narratives                     | No       |
-| `OPENAI_API_KEY`               | Enables GPT narratives                        | No       |
-| `GOOGLE_GENERATIVE_AI_API_KEY` | Enables Gemini narratives                     | No       |
+| `ANTHROPIC_API_KEY`            | Enables Claude reports (or enter in /settings) | No       |
+| `OPENAI_API_KEY`               | Enables GPT reports (or enter in /settings)    | No       |
+| `GOOGLE_GENERATIVE_AI_API_KEY` | Enables Gemini reports (or enter in /settings) | No       |
 
 ## Monorepo structure
 
