@@ -114,23 +114,29 @@ export const reportsRoutes = new Elysia()
           githubLogin,
         });
 
+        const selectedRepos = body.repos && body.repos.length > 0 ? body.repos : null;
+
         const commits = activity.days.flatMap((day) =>
-          day.commits.map((c) => ({
-            message: c.message,
-            repo: c.repoName,
-            additions: c.additions,
-            deletions: c.deletions,
-            date: c.authoredAt,
-          })),
+          day.commits
+            .filter((c) => !selectedRepos || selectedRepos.includes(c.repoName))
+            .map((c) => ({
+              message: c.message,
+              repo: c.repoName,
+              additions: c.additions,
+              deletions: c.deletions,
+              date: c.authoredAt,
+            })),
         );
 
         const prs = activity.days.flatMap((day) =>
-          day.prs.map((p) => ({
-            title: p.title,
-            repo: p.repoName,
-            state: p.state,
-            date: p.ghCreatedAt,
-          })),
+          day.prs
+            .filter((p) => !selectedRepos || selectedRepos.includes(p.repoName))
+            .map((p) => ({
+              title: p.title,
+              repo: p.repoName,
+              state: p.state,
+              date: p.ghCreatedAt,
+            })),
         );
 
         const report = await generateExecutiveReport({
@@ -154,6 +160,7 @@ export const reportsRoutes = new Elysia()
         startDate: t.String(),
         endDate: t.String(),
         scope: t.Optional(t.String()),
+        repos: t.Optional(t.Array(t.String())),
       }),
     },
   );

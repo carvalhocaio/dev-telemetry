@@ -502,12 +502,8 @@ export async function runBackfillBatch(
   const userId = job.userId;
 
   // Read sync scope preference for this user (null = sync everything).
-  const [secretRow] = await db
-    .select({ syncScopes: userSecret.syncScopes })
-    .from(userSecret)
-    .where(eq(userSecret.userId, userId))
-    .limit(1);
-  const syncScopes = secretRow?.syncScopes ?? null;
+  // All accessible repositories (personal + orgs) are synced automatically.
+  const syncScopes = null;
 
   let cursor: SyncCursor = (job.cursor as SyncCursor | null) ?? {
     phase: "repos",

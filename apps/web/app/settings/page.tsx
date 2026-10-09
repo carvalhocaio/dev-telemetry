@@ -82,15 +82,6 @@ export default function SettingsPage() {
   const [llmSaved, setLlmSaved] = useState(false);
   const [llmError, setLlmError] = useState<string | null>(null);
 
-  // Sync scopes form
-  const [availableOrgs, setAvailableOrgs] = useState<{ login: string }[]>([]);
-  const [selectedScopes, setSelectedScopes] = useState<string[] | null>(null);
-  const [scopesLoaded, setScopesLoaded] = useState(false);
-  const [scopesSaving, setScopesSaving] = useState(false);
-  const [scopesSaved, setScopesSaved] = useState(false);
-  const [scopesError, setScopesError] = useState<string | null>(null);
-  const [fetchingOrgs, setFetchingOrgs] = useState(false);
-
   // Sync state
   const [syncing, setSyncing] = useState(false);
   const [syncJobId, setSyncJobId] = useState<string | null>(null);
@@ -121,17 +112,6 @@ export default function SettingsPage() {
       .then((r) => (r.ok ? (r.json() as Promise<SyncJob | null>) : null))
       .then((job) => { if (job) setSyncJob(job); })
       .catch(() => null);
-
-    fetch("/api/me/sync-scopes", { credentials: "include" })
-      .then((r) => r.ok ? r.json() as Promise<{ selectedScopes: string[] | null; availableOrgs: { login: string }[] }> : null)
-      .then((data) => {
-        if (data) {
-          setAvailableOrgs(data.availableOrgs);
-          setSelectedScopes(data.selectedScopes);
-        }
-        setScopesLoaded(true);
-      })
-      .catch(() => setScopesLoaded(true));
   }, [session]);
 
 
@@ -193,51 +173,6 @@ export default function SettingsPage() {
       setTimeout(() => setPatSaved(false), 3000);
     } finally {
       setPatSaving(false);
-    }
-  }
-
-  async function saveScopes(scopes: string[]) {
-    setScopesSaving(true);
-    setScopesError(null);
-    try {
-      const res = await fetch("/api/me/sync-scopes", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ scopes }),
-        credentials: "include",
-      });
-      if (!res.ok) {
-        setScopesError("Falha ao salvar — tente novamente.");
-        return;
-      }
-      setSelectedScopes(scopes);
-      setScopesSaved(true);
-      setTimeout(() => setScopesSaved(false), 3000);
-    } finally {
-      setScopesSaving(false);
-    }
-  }
-
-  function toggleScope(token: string) {
-    const current = selectedScopes ?? ["personal", ...availableOrgs.map((o) => o.login)];
-    setSelectedScopes(
-      current.includes(token) ? current.filter((s) => s !== token) : [...current, token],
-    );
-  }
-
-  async function fetchOrgs() {
-    setFetchingOrgs(true);
-    setScopesError(null);
-    try {
-      const r = await fetch("/api/me/sync-scopes", { credentials: "include" });
-      if (!r.ok) throw new Error();
-      const data = await r.json() as { selectedScopes: string[] | null; availableOrgs: { login: string }[] };
-      setAvailableOrgs(data.availableOrgs);
-      setSelectedScopes(data.selectedScopes);
-    } catch {
-      setScopesError("não foi possível buscar as orgs — verifique se o PAT tem escopo read:org");
-    } finally {
-      setFetchingOrgs(false);
     }
   }
 
@@ -383,61 +318,6 @@ export default function SettingsPage() {
           <p className="font-mono text-xs text-alert">{patError}</p>
         )}
       </section>
-
-      {/* Sync scopes section — only shown when PAT is configured and data loaded */}
-      {config?.hasPat && scopesLoaded && (
-        <section className="space-y-3 border-t border-border pt-6">
-          <div className="flex items-center justify-between">
-            <h2 className="font-mono text-xs uppercase tracking-wider text-muted">Escopos de Sync</h2>
-            <button
-              type="button"
-              onClick={fetchOrgs}
-              disabled={fetchingOrgs}
-              className="inline-flex cursor-pointer items-center gap-1.5 font-mono text-xs text-muted hover:text-accent transition-colors disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {fetchingOrgs && <Loader2 size={10} className="animate-spin" />}
-              buscar orgs
-            </button>
-          </div>
-          <p className="font-mono text-xs text-muted/70">
-            Selecione quais escopos serão ingeridos nos próximos syncs.
-            Dados já sincronizados não são removidos.
-          </p>
-          <div className="space-y-1">
-            {(["personal", ...availableOrgs.map((o) => o.login)] as string[]).map((token) => {
-              const active = selectedScopes === null || selectedScopes.includes(token);
-              return (
-                <label
-                  key={token}
-                  className="flex cursor-pointer items-center gap-3 rounded border border-border bg-surface px-3 py-2 font-mono text-sm transition-colors hover:border-accent"
-                >
-                  <input
-                    type="checkbox"
-                    checked={active}
-                    onChange={() => toggleScope(token)}
-                    className="accent-accent"
-                  />
-                  <span className={active ? "text-foreground" : "text-muted"}>
-                    {token === "personal" ? "pessoal" : token}
-                  </span>
-                </label>
-              );
-            })}
-          </div>
-          <button
-            type="button"
-            onClick={() => saveScopes(selectedScopes ?? ["personal", ...availableOrgs.map((o) => o.login)])}
-            disabled={scopesSaving}
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded border border-accent bg-accent/10 px-3 py-2 font-mono text-xs text-accent transition-colors hover:bg-accent/20 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {scopesSaving ? <Loader2 size={12} className="animate-spin" /> : scopesSaved ? <Check size={12} /> : null}
-            {scopesSaved ? "salvo" : "salvar escopos"}
-          </button>
-          {scopesError && (
-            <p className="font-mono text-xs text-alert">{scopesError}</p>
-          )}
-        </section>
-      )}
 
       {/* LLM section */}
       <section className="space-y-3 border-t border-border pt-6">

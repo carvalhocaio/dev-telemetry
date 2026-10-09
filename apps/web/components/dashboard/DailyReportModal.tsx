@@ -10,6 +10,7 @@ export interface DailyReportModalProps {
   onClose: () => void;
   startDate: string;
   endDate: string;
+  availableRepos?: string[];
   scope?: string;
 }
 
@@ -27,6 +28,7 @@ export default function DailyReportModal({
   onClose,
   startDate,
   endDate,
+  availableRepos,
   scope,
 }: DailyReportModalProps) {
   const [report, setReport] = useState<ExecutiveReport | null>(null);
@@ -35,46 +37,78 @@ export default function DailyReportModal({
   const [copied, setCopied] = useState(false);
   const [copyError, setCopyError] = useState(false);
 
-  const fetchReport = useCallback(async (signal?: AbortSignal) => {
-    if (!startDate || !endDate) return;
-    setLoading(true);
-    setError(null);
+  const [reposList, setReposList] = useState<string[]>(availableRepos ?? []);
+  const [selectedRepos, setSelectedRepos] = useState<string[]>(availableRepos ?? []);
 
-    try {
-      const res = await fetch("/api/reports/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          startDate,
-          endDate,
-          scope: scope ?? "all",
-        }),
-        credentials: "include",
-        signal,
-      });
-
-      if (!res.ok) {
-        let errorMsg = "Falha ao gerar o report de atividades. Tente novamente mais tarde.";
-        try {
-          const body = (await res.json()) as { error?: string };
-          if (body?.error) errorMsg = body.error;
-        } catch {
-          const text = await res.text().catch(() => "");
-          if (text) errorMsg = text;
-        }
-        throw new Error(errorMsg);
-      }
-
-      const data = (await res.json()) as ExecutiveReport;
-      setReport(data);
-    } catch (err: unknown) {
-      if (err instanceof Error && err.name === "AbortError") return;
-      console.error("[DailyReportModal] error:", err);
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setLoading(false);
+  // Sync availableRepos prop when it changes
+  useEffect(() => {
+    if (availableRepos && availableRepos.length > 0) {
+      setReposList(availableRepos);
+      setSelectedRepos(availableRepos);
     }
-  }, [startDate, endDate, scope]);
+  }, [availableRepos]);
+
+  // Discover repos if not provided
+  useEffect(() => {
+    if (!isOpen || (availableRepos && availableRepos.length > 0) || !startDate || !endDate) return;
+
+    fetch(`/api/activity/daily?start=${startDate}&end=${endDate}`, { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: { totals?: { repositories?: string[] } } | null) => {
+        if (data?.totals?.repositories && data.totals.repositories.length > 0) {
+          setReposList(data.totals.repositories);
+          setSelectedRepos(data.totals.repositories);
+        }
+      })
+      .catch(() => null);
+  }, [isOpen, availableRepos, startDate, endDate]);
+
+  const fetchReport = useCallback(
+    async (signal?: AbortSignal, reposOverride?: string[]) => {
+      if (!startDate || !endDate) return;
+      setLoading(true);
+      setError(null);
+
+      const activeRepos = reposOverride ?? selectedRepos;
+
+      try {
+        const res = await fetch("/api/reports/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            startDate,
+            endDate,
+            scope: scope ?? "all",
+            repos: activeRepos.length > 0 ? activeRepos : undefined,
+          }),
+          credentials: "include",
+          signal,
+        });
+
+        if (!res.ok) {
+          let errorMsg = "Falha ao gerar o report de atividades. Tente novamente mais tarde.";
+          try {
+            const body = (await res.json()) as { error?: string };
+            if (body?.error) errorMsg = body.error;
+          } catch {
+            const text = await res.text().catch(() => "");
+            if (text) errorMsg = text;
+          }
+          throw new Error(errorMsg);
+        }
+
+        const data = (await res.json()) as ExecutiveReport;
+        setReport(data);
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name === "AbortError") return;
+        console.error("[DailyReportModal] error:", err);
+        setError(err instanceof Error ? err.message : String(err));
+      } finally {
+        setLoading(false);
+      }
+    },
+    [startDate, endDate, scope, selectedRepos],
+  );
 
   useEffect(() => {
     if (isOpen) {
@@ -121,6 +155,23 @@ export default function DailyReportModal({
       setCopyError(true);
       setTimeout(() => setCopyError(false), 3000);
     }
+  }
+
+  function handleToggleRepo(repo: string) {
+    const updated = selectedRepos.includes(repo)
+      ? selectedRepos.filter((r) => r !== repo)
+      : [...selectedRepos, repo];
+    setSelectedRepos(updated);
+    void fetchReport(undefined, updated);
+  }
+
+  function handleSelectAllRepos() {
+    setSelectedRepos(reposList);
+    void fetchReport(undefined, reposList);
+  }
+
+  function handleSelectNoneRepos() {
+    setSelectedRepos([]);
   }
 
   const isSingleDay = startDate === endDate;
@@ -175,6 +226,50 @@ export default function DailyReportModal({
               <X size={18} aria-hidden="true" />
             </button>
           </header>
+
+          {/* Projects filter toolbar */}
+          {reposList.length > 1 && (
+            <div className="flex flex-wrap items-center gap-2 border-b border-zinc-800 bg-surface/30 px-6 py-2.5">
+              <span className="font-mono text-xs text-muted shrink-0">Projetos:</span>
+              <div className="flex flex-wrap items-center gap-1.5 flex-1">
+                {reposList.map((repo) => {
+                  const isSelected = selectedRepos.includes(repo);
+                  return (
+                    <button
+                      key={repo}
+                      type="button"
+                      onClick={() => handleToggleRepo(repo)}
+                      className={`cursor-pointer inline-flex items-center gap-1 rounded-none px-2 py-0.5 font-mono text-xs border transition-colors ${
+                        isSelected
+                          ? "border-accent bg-accent/15 text-accent font-medium"
+                          : "border-zinc-800 bg-surface/60 text-muted/70 hover:border-zinc-700 hover:text-foreground"
+                      }`}
+                    >
+                      {isSelected && <Check size={10} />}
+                      <span>{repo}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleSelectAllRepos}
+                  className="font-mono text-[10px] text-muted hover:text-foreground underline cursor-pointer"
+                >
+                  todos
+                </button>
+                <span className="text-muted/40">·</span>
+                <button
+                  type="button"
+                  onClick={handleSelectNoneRepos}
+                  className="font-mono text-[10px] text-muted hover:text-foreground underline cursor-pointer"
+                >
+                  limpar
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Modal Content */}
           <div className="flex-1 overflow-y-auto p-6 space-y-6">

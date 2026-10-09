@@ -2,51 +2,19 @@
 
 import { LogOut } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
 
 import GenerateReportButton from "@/components/dashboard/GenerateReportButton";
-import ScopeSelector from "@/components/ScopeSelector";
 import SyncButton from "@/components/SyncButton";
 import { signOut } from "@/lib/auth-client";
 import { resolveMode } from "@/lib/range";
 import { isScope, type Scope } from "@/types/report";
 
-const SCOPE_STORAGE_KEY = "dt:scope";
-
 export default function DashboardHeader() {
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const mode = resolveMode(searchParams.get("mode"));
   const rawScope = searchParams.get("scope");
   const scope: Scope = isScope(rawScope) ? rawScope : "all";
   const filterStart = searchParams.get("start") ?? undefined;
   const filterEnd = searchParams.get("end") ?? undefined;
-  const [orgs, setOrgs] = useState<string[]>([]);
-
-  useEffect(() => {
-    if (!searchParams.get("scope")) {
-      const saved = localStorage.getItem(SCOPE_STORAGE_KEY);
-      if (saved && saved !== "all") {
-        const params = new URLSearchParams(searchParams.toString());
-        params.set("scope", saved);
-        router.replace(`/dashboard?${params.toString()}`);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem(SCOPE_STORAGE_KEY, scope);
-  }, [scope]);
-
-  useEffect(() => {
-    fetch("/api/me/orgs", { credentials: "include" })
-      .then((r) => (r.ok ? (r.json() as Promise<{ orgs: string[] }>) : null))
-      .then((data) => {
-        if (data) setOrgs(data.orgs);
-      })
-      .catch(() => null);
-  }, []);
 
   async function handleSignOut() {
     await signOut();
@@ -69,7 +37,6 @@ export default function DashboardHeader() {
             filterEnd={filterEnd}
           />
           <SyncButton />
-          <ScopeSelector currentScope={scope} currentMode={mode} orgs={orgs} />
           <button
             type="button"
             onClick={handleSignOut}
@@ -106,7 +73,6 @@ export default function DashboardHeader() {
           />
           <SyncButton />
         </div>
-        <ScopeSelector currentScope={scope} currentMode={mode} orgs={orgs} fullWidth />
       </div>
     </header>
   );

@@ -374,6 +374,7 @@ export default function DailyTimeline({ start, end, scope }: DailyTimelineProps)
           onClose={() => setModalDate(null)}
           startDate={modalDate}
           endDate={modalDate}
+          availableRepos={data?.days.find((d) => d.date === modalDate)?.repositories ?? []}
           scope={scope}
         />
       )}
