@@ -7,11 +7,15 @@ import { useReportRefetch } from "@/hooks/useReportRefetch";
 
 type Status = "idle" | "loading" | "success" | "error";
 
+interface SyncButtonProps {
+  since?: string;
+}
+
 /**
  * Triggers an incremental sync via the Elysia sync API, chains batches
  * until done, then refetches the dashboard report.
  */
-export default function SyncButton() {
+export default function SyncButton({ since }: SyncButtonProps) {
   const { trigger } = useReportRefetch();
   const [status, setStatus] = useState<Status>("idle");
   const [syncError, setSyncError] = useState<string | null>(null);
@@ -22,10 +26,17 @@ export default function SyncButton() {
     setSyncError(null);
 
     try {
+      const syncSince = since
+        ? new Date(new Date(since).getTime() - 2 * 24 * 60 * 60 * 1000).toISOString()
+        : undefined;
+
       const startRes = await fetch("/api/sync/start", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode: "recent" }),
+        body: JSON.stringify({
+          mode: since ? "recent" : "week",
+          since: syncSince,
+        }),
         credentials: "include",
       });
 

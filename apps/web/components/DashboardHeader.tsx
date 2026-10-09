@@ -50,7 +50,7 @@ export default function DashboardHeader() {
             filterStart={filterStart}
             filterEnd={filterEnd}
           />
-          <SyncButton />
+          <SyncButton since={filterStart} />
           <button
             type="button"
             onClick={handleSignOut}
@@ -85,7 +85,7 @@ export default function DashboardHeader() {
             filterStart={filterStart}
             filterEnd={filterEnd}
           />
-          <SyncButton />
+          <SyncButton since={filterStart} />
         </div>
       </div>
     </header>

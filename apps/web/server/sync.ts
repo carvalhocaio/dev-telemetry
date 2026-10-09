@@ -115,7 +115,7 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
             .where(eq(user.id, userId));
         }
 
-        const jobId = await startSyncJob(db, userId, body.mode);
+        const jobId = await startSyncJob(db, userId, body.mode, body.since);
         const octokit = createOctokit(pat);
 
         const { done } = await runBackfillBatch(db, octokit, jobId, ghUser.login);
@@ -129,6 +129,7 @@ export const syncRoutes = new Elysia({ prefix: "/sync" })
     {
       body: t.Object({
         mode: t.Union([t.Literal("full"), t.Literal("recent"), t.Literal("week")]),
+        since: t.Optional(t.String()),
       }),
     },
   )

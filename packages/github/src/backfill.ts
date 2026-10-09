@@ -48,10 +48,16 @@ export async function startSyncJob(
   db: Database,
   userId: string,
   mode: SyncMode,
+  since?: string,
 ): Promise<string> {
   const [job] = await db
     .insert(syncJob)
-    .values({ userId, mode, status: "queued" })
+    .values({
+      userId,
+      mode,
+      status: "queued",
+      cursor: since ? { since } : null,
+    })
     .returning({ id: syncJob.id });
   if (!job) throw new Error("Failed to create sync_job");
   return job.id;
@@ -338,16 +344,24 @@ async function ingestPrsPage(
     state: "all",
     per_page: 100,
     page,
-    sort: "created",
-    direction: "asc",
+    sort: "updated",
+    direction: "desc",
   });
 
-  const hasMore = resp.headers.link?.includes('rel="next"') ?? false;
+  const sinceDate = since ? new Date(since) : null;
+
+  let hasMore = resp.headers.link?.includes('rel="next"') ?? false;
+  if (sinceDate && resp.data.length > 0) {
+    const oldestUpdatedOnPage = new Date(resp.data[resp.data.length - 1]!.updated_at);
+    if (oldestUpdatedOnPage < sinceDate) {
+      hasMore = false;
+    }
+  }
 
   const userPrs = resp.data.filter(
     (pr) =>
       pr.user?.login === userLogin &&
-      (!since || new Date(pr.created_at) >= new Date(since)),
+      (!sinceDate || new Date(pr.updated_at) >= sinceDate || new Date(pr.created_at) >= sinceDate),
   );
 
   // Identify PRs already in the DB so we only fetch stats for new ones.
@@ -505,16 +519,21 @@ export async function runBackfillBatch(
   // All accessible repositories (personal + orgs) are synced automatically.
   const syncScopes = null;
 
-  let cursor: SyncCursor = (job.cursor as SyncCursor | null) ?? {
-    phase: "repos",
-    repoIds: [],
-    repoIndex: 0,
-    page: 1,
-    since: job.mode === "recent"
+  const rawCursor = job.cursor as Partial<SyncCursor> | null;
+  const initialSince =
+    rawCursor?.since ??
+    (job.mode === "recent"
       ? new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()
       : job.mode === "week"
         ? new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-        : undefined,
+        : undefined);
+
+  let cursor: SyncCursor = {
+    phase: rawCursor?.phase ?? "repos",
+    repoIds: rawCursor?.repoIds ?? [],
+    repoIndex: rawCursor?.repoIndex ?? 0,
+    page: rawCursor?.page ?? 1,
+    since: initialSince,
   };
 
   try {
