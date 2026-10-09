@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Check, Clipboard, Loader2, RefreshCw, X } from "lucide-react";
+import { Check, Clipboard, Loader2, RefreshCw, Sparkles, X } from "lucide-react";
 import type { ExecutiveReport } from "@dev-telemetry/ai";
 
 export interface DailyReportModalProps {
@@ -378,6 +378,31 @@ export default function DailyReportModal({
                 </section>
               </div>
             )}
+            {/* Empty state: ready to generate */}
+            {!loading && !report && !error && (
+              <div className="flex flex-col items-center justify-center py-10 px-4 text-center space-y-3">
+                <div className="p-3 border border-zinc-800 bg-surface/40 text-accent">
+                  <Sparkles size={22} />
+                </div>
+                <h3 className="font-melodrama text-lg font-bold text-foreground">
+                  Pronto para compilar o relatório
+                </h3>
+                <p className="font-mono text-xs text-muted max-w-sm leading-relaxed">
+                  {selectedRepos.length === 0
+                    ? "Selecione ao menos um projeto acima para incluir no relatório."
+                    : "Revise os projetos selecionados acima e clique no botão abaixo para gerar o relatório executivo com IA."}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => void fetchReport()}
+                  disabled={loading || selectedRepos.length === 0}
+                  className="mt-2 inline-flex cursor-pointer items-center gap-1.5 border border-accent bg-accent/20 px-4 py-2 font-mono text-xs text-accent hover:bg-accent/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Sparkles size={13} />
+                  Gerar Report
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Modal Footer */}
@@ -386,11 +411,21 @@ export default function DailyReportModal({
               <button
                 type="button"
                 onClick={() => void fetchReport()}
-                disabled={loading}
-                className="inline-flex cursor-pointer items-center gap-1.5 rounded-none border border-zinc-800 bg-surface px-3 py-1.5 font-mono text-xs text-foreground transition-colors hover:border-accent hover:text-accent disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={loading || selectedRepos.length === 0}
+                className={`inline-flex cursor-pointer items-center gap-1.5 rounded-none border px-3 py-1.5 font-mono text-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                  report
+                    ? "border-zinc-800 bg-surface text-foreground hover:border-accent hover:text-accent"
+                    : "border-accent bg-accent/20 text-accent font-medium hover:bg-accent/30"
+                }`}
               >
-                <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
-                Regenerar
+                {loading ? (
+                  <RefreshCw size={13} className="animate-spin" />
+                ) : report ? (
+                  <RefreshCw size={13} />
+                ) : (
+                  <Sparkles size={13} />
+                )}
+                {report ? "Regenerar" : "Gerar Report"}
               </button>
             </div>
 

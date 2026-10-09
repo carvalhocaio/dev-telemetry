@@ -1,184 +1,182 @@
 "use client";
 
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
+import { format, subDays, subMonths } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import type { DateRange } from "react-day-picker";
 
 import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import type { CustomRange } from "@/lib/range";
-import type { Granularity } from "@/types/report";
 
 interface CustomRangeFilterProps {
   value?: CustomRange;
   onApply?: () => void;
 }
 
-const MAX_BARS = 45;
-const MS_PER_DAY = 86_400_000;
-
-const RESOLUTIONS: readonly { value: Granularity; label: string; divisor: number }[] = [
-  { value: "daily",   label: "Dia",    divisor: 1   },
-  { value: "weekly",  label: "Semana", divisor: 7   },
-  { value: "monthly", label: "Mês",    divisor: 30  },
-];
-
-function allowedResolutions(start: Date | undefined, end: Date | undefined) {
-  if (!start || !end || start > end) return new Set<Granularity>(["daily", "weekly", "monthly"]);
-  const days = Math.round((end.getTime() - start.getTime()) / MS_PER_DAY);
-  return new Set<Granularity>(
-    RESOLUTIONS.filter((r) => days / r.divisor <= MAX_BARS).map((r) => r.value),
-  );
+function formatDate(date: Date): string {
+  return format(date, "dd/MM/yyyy");
 }
 
-const START_MONTH = new Date(2020, 0);
-const END_MONTH = new Date(new Date().getFullYear() + 1, 11);
+function toIso(date: Date): string {
+  return format(date, "yyyy-MM-dd");
+}
 
 export default function CustomRangeFilter({ value, onApply }: CustomRangeFilterProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const scope = searchParams.get("scope");
 
-  const [startDate, setStartDate] = useState<Date | undefined>(
-    value?.start ? new Date(value.start) : undefined,
+  const initialStart = value?.start ? new Date(value.start) : undefined;
+  const initialEnd = value?.end ? new Date(value.end) : undefined;
+
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: initialStart,
+    to: initialEnd,
+  });
+
+  const [displayMonth, setDisplayMonth] = useState<Date>(
+    initialEnd ?? initialStart ?? new Date(),
   );
-  const [endDate, setEndDate] = useState<Date | undefined>(
-    value?.end ? new Date(value.end) : undefined,
-  );
-  const [startMonth, setStartMonth] = useState<Date>(startDate ?? new Date());
-  const [endMonth, setEndMonth] = useState<Date>(endDate ?? new Date());
-  const [res, setRes] = useState<Granularity>(value?.res ?? "daily");
+  const [isOpen, setIsOpen] = useState(false);
 
-  const ordered = !startDate || !endDate || startDate <= endDate;
-  const canApply = !!startDate && !!endDate && ordered;
+  const startDate = dateRange?.from;
+  const endDate = dateRange?.to;
 
-  const allowed = allowedResolutions(startDate, endDate);
+  const canApply = Boolean(startDate && endDate && startDate <= endDate);
 
-  function autoSwitchRes(newAllowed: Set<Granularity>, currentRes: Granularity) {
-    if (!newAllowed.has(currentRes)) {
-      const fallback = RESOLUTIONS.slice().reverse().find((r) => newAllowed.has(r.value));
-      if (fallback) setRes(fallback.value);
-    }
-  }
+  const rangeLabel =
+    startDate && endDate
+      ? `${formatDate(startDate)} – ${formatDate(endDate)}`
+      : startDate
+        ? `${formatDate(startDate)} – …`
+        : "Selecione o período";
 
-  function handleStartSelect(date: Date | undefined) {
-    setStartDate(date);
-    autoSwitchRes(allowedResolutions(date, endDate), res);
-  }
-
-  function handleEndSelect(date: Date | undefined) {
-    setEndDate(date);
-    autoSwitchRes(allowedResolutions(startDate, date), res);
-  }
-
-  function handleApply(): void {
-    if (!canApply || !startDate || !endDate) return;
+  function applyRange(start: Date, end: Date) {
     const params = new URLSearchParams({
       mode: "custom",
-      res,
-      start: format(startDate, "yyyy-MM-dd"),
-      end: format(endDate, "yyyy-MM-dd"),
+      res: "daily",
+      start: toIso(start),
+      end: toIso(end),
     });
     if (scope) params.set("scope", scope);
     router.push(`/dashboard?${params.toString()}`);
+    setIsOpen(false);
     onApply?.();
   }
 
-  const calendarProps = {
-    mode: "single" as const,
-    captionLayout: "dropdown" as const,
-    locale: ptBR,
-    showOutsideDays: false,
-    startMonth: START_MONTH,
-    endMonth: END_MONTH,
-  };
+  function handleApply() {
+    if (!startDate || !endDate) return;
+    applyRange(startDate, endDate);
+  }
+
+  function applyPreset(preset: "today" | "week" | "month") {
+    const now = new Date();
+    let from: Date;
+    let to: Date = now;
+
+    if (preset === "today") {
+      from = now;
+      to = now;
+    } else if (preset === "week") {
+      from = subDays(now, 7);
+    } else {
+      from = subMonths(now, 1);
+    }
+
+    setDateRange({ from, to });
+    setDisplayMonth(to);
+    applyRange(from, to);
+  }
+
+  function handleRangeSelect(range: DateRange | undefined) {
+    setDateRange(range);
+  }
 
   return (
     <div
       id="custom-range-filter"
-      className="flex flex-col gap-4 rounded-md border border-surface bg-surface/40 p-4"
+      className="flex flex-col gap-2 rounded-none border border-zinc-800 bg-surface/40 p-4"
     >
-      <div className="flex flex-col gap-6 sm:flex-row">
-        {/* Início */}
-        <div className="flex flex-col gap-2">
-          <span className="font-mono text-[10px] uppercase tracking-wider text-muted">
-            Início
-          </span>
-          <Calendar
-            {...calendarProps}
-            selected={startDate}
-            onSelect={handleStartSelect}
-            month={startMonth}
-            onMonthChange={setStartMonth}
-          />
-          <span className="font-mono text-[10px] text-muted">
-            {startDate ? format(startDate, "dd/MM/yyyy") : "—"}
-          </span>
-        </div>
+      <span className="font-mono text-xs uppercase tracking-wider text-muted font-semibold">
+        Período
+      </span>
 
-        <div className="hidden w-px self-stretch bg-surface sm:block" />
+      <div className="flex flex-wrap items-center gap-2">
+        {/* Single Calendar Popover */}
+        <Popover open={isOpen} onOpenChange={setIsOpen}>
+          <PopoverTrigger className="inline-flex cursor-pointer items-center justify-between gap-3 rounded-none border border-zinc-800 bg-surface px-3 py-1.5 font-mono text-xs text-foreground transition-colors hover:border-accent hover:text-accent select-none">
+            <span>{rangeLabel}</span>
+            <CalendarIcon size={14} className="text-muted" aria-hidden="true" />
+          </PopoverTrigger>
 
-        {/* Fim */}
-        <div className="flex flex-col gap-2">
-          <span className="font-mono text-[10px] uppercase tracking-wider text-muted">
-            Fim
-          </span>
-          <Calendar
-            {...calendarProps}
-            selected={endDate}
-            onSelect={handleEndSelect}
-            month={endMonth}
-            onMonthChange={setEndMonth}
-          />
-          <span className="font-mono text-[10px] text-muted">
-            {endDate ? format(endDate, "dd/MM/yyyy") : "—"}
-          </span>
-        </div>
-      </div>
+          <PopoverContent className="p-3 bg-surface/95 border-zinc-800" align="start">
+            <Calendar
+              mode="range"
+              selected={dateRange}
+              onSelect={handleRangeSelect}
+              locale={ptBR}
+              numberOfMonths={1}
+              month={displayMonth}
+              onMonthChange={setDisplayMonth}
+              showOutsideDays={false}
+            />
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-surface pt-3">
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-[10px] uppercase tracking-wider text-muted">
-            Resolução
-          </span>
-          <div className="flex gap-1">
-            {RESOLUTIONS.map((option) => {
-              const isAllowed = allowed.has(option.value);
-              const isActive = res === option.value;
-              return (
+            <div className="mt-3 flex items-center justify-between gap-3 border-t border-zinc-800/80 pt-2.5">
+              <span className="font-mono text-[11px] text-muted truncate max-w-[170px]">
+                {rangeLabel}
+              </span>
+              <div className="flex items-center gap-2 shrink-0">
                 <button
-                  key={option.value}
                   type="button"
-                  onClick={() => isAllowed && setRes(option.value)}
-                  disabled={!isAllowed}
-                  title={!isAllowed ? `Mais de ${MAX_BARS} barras para esta resolução` : undefined}
-                  className={`rounded border px-2 py-0.5 font-mono text-[10px] transition-colors disabled:cursor-not-allowed disabled:opacity-30 ${
-                    isActive
-                      ? "border-accent text-accent"
-                      : "border-surface text-muted hover:border-muted hover:text-foreground"
-                  }`}
+                  onClick={() => setIsOpen(false)}
+                  className="cursor-pointer rounded-none border border-zinc-800 bg-surface px-2.5 py-1 font-mono text-xs text-muted hover:text-foreground transition-colors"
                 >
-                  {option.label}
+                  Fechar
                 </button>
-              );
-            })}
-          </div>
-        </div>
+                <button
+                  type="button"
+                  onClick={handleApply}
+                  disabled={!canApply}
+                  className="cursor-pointer rounded-none border border-accent bg-accent/20 px-3 py-1 font-mono text-xs text-accent font-medium hover:bg-accent/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Aplicar
+                </button>
+              </div>
+            </div>
+          </PopoverContent>
+        </Popover>
+
+        {/* Quick presets */}
+        <button
+          type="button"
+          onClick={() => applyPreset("week")}
+          className="cursor-pointer rounded-none border border-zinc-800 bg-surface/60 px-3 py-1.5 font-mono text-xs text-muted hover:border-zinc-700 hover:text-foreground transition-colors"
+        >
+          Última semana
+        </button>
 
         <button
           type="button"
-          onClick={handleApply}
-          disabled={!canApply}
-          className="rounded border border-surface bg-surface/40 px-3 py-1 font-mono text-xs text-foreground transition-colors hover:border-accent disabled:opacity-50"
+          onClick={() => applyPreset("month")}
+          className="cursor-pointer rounded-none border border-zinc-800 bg-surface/60 px-3 py-1.5 font-mono text-xs text-muted hover:border-zinc-700 hover:text-foreground transition-colors"
         >
-          Aplicar
+          Último mês
         </button>
 
-        {!ordered && (
-          <p role="alert" className="w-full font-mono text-[10px] text-level-abaixo">
-            A data de início deve ser anterior ou igual à de fim.
-          </p>
-        )}
+        <button
+          type="button"
+          onClick={() => applyPreset("today")}
+          className="cursor-pointer rounded-none border border-zinc-800 bg-surface/60 px-3 py-1.5 font-mono text-xs text-muted hover:border-zinc-700 hover:text-foreground transition-colors"
+        >
+          Hoje
+        </button>
       </div>
     </div>
   );
