@@ -31,7 +31,7 @@ describe("DailyReportModal", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("renders single day heading in DD/MM/YYYY format and loads executive report", async () => {
+  it("renders single day heading in DD/MM/YYYY format and loads executive report on generate click", async () => {
     const mockReport = {
       title: "Report de Atividades — 08/10/2026",
       summary: "Implementação da nova timeline e modal de daily reports.",
@@ -59,6 +59,7 @@ describe("DailyReportModal", () => {
         onClose={vi.fn()}
         startDate="2026-10-08"
         endDate="2026-10-08"
+        availableRepos={["dev-telemetry"]}
       />,
     );
 
@@ -66,6 +67,10 @@ describe("DailyReportModal", () => {
     expect(
       screen.getByText("Report de Atividades — 08/10/2026"),
     ).toBeDefined();
+
+    // Click "Gerar Report" to trigger compilation
+    const generateBtn = screen.getAllByRole("button", { name: /Gerar Report/i })[0]!;
+    fireEvent.click(generateBtn);
 
     await waitFor(() => {
       expect(
@@ -123,8 +128,13 @@ describe("DailyReportModal", () => {
         onClose={vi.fn()}
         startDate="2026-10-08"
         endDate="2026-10-08"
+        availableRepos={["dev-telemetry"]}
       />,
     );
+
+    // Click "Gerar Report"
+    const generateBtn = screen.getAllByRole("button", { name: /Gerar Report/i })[0]!;
+    fireEvent.click(generateBtn);
 
     await waitFor(() => {
       expect(screen.getByText("Copiar Report")).toBeDefined();
@@ -155,8 +165,13 @@ describe("DailyReportModal", () => {
         onClose={vi.fn()}
         startDate="2026-10-08"
         endDate="2026-10-08"
+        availableRepos={["dev-telemetry"]}
       />,
     );
+
+    // Click "Gerar Report"
+    const generateBtn = screen.getAllByRole("button", { name: /Gerar Report/i })[0]!;
+    fireEvent.click(generateBtn);
 
     await waitFor(() => {
       expect(
@@ -173,16 +188,6 @@ describe("DailyReportModal", () => {
 
   it("calls onClose when close button is clicked", async () => {
     const handleClose = vi.fn();
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        title: "Report",
-        summary: "Resumo",
-        projects: [],
-        markdownText: "Markdown",
-      }),
-    } as unknown as Response);
-
     render(
       <DailyReportModal
         isOpen={true}

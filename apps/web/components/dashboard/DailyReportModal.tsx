@@ -146,15 +146,6 @@ export default function DailyReportModal({
 
   useEffect(() => {
     if (!isOpen) return;
-    const controller = new AbortController();
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    void fetchReport(controller.signal, availableRepos ?? []);
-    return () => controller.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, startDate, endDate]);
-
-  useEffect(() => {
-    if (!isOpen) return;
 
     function handleKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") {
