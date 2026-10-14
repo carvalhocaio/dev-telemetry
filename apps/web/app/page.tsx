@@ -24,7 +24,7 @@ export default async function LandingPage() {
   const session = await auth.api.getSession({ headers: await headers() });
 
   return (
-    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-16 px-6 py-16">
+    <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-16 px-6 py-16">
       {/* hero — title + subtitle left, CTA right */}
       <section className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
         <div>
@@ -79,6 +79,6 @@ export default async function LandingPage() {
           ))}
         </div>
       </section>
-    </main>
+    </div>
   );
 }
