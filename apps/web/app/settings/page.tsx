@@ -242,7 +242,7 @@ export default function SettingsPage() {
   if (sessionPending || !session) return null;
 
   return (
-    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-8 sm:px-6">
+    <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-8 px-4 py-8 sm:px-6">
       {/* heading */}
       <div className="border-b border-border pb-4">
         <h1 className="font-display text-2xl font-bold tracking-tight text-foreground">
@@ -469,6 +469,6 @@ export default function SettingsPage() {
           <p className="font-mono text-xs text-muted/60">Configure um PAT para sincronizar.</p>
         )}
       </section>
-    </main>
+    </div>
   );
 }

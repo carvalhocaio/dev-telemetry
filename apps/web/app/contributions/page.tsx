@@ -37,7 +37,7 @@ const SETUP_LINES = [
  */
 export default function ContributionsPage() {
   return (
-    <main className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-10 px-6 py-16">
+    <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col gap-10 px-6 py-16">
       {/* heading */}
       <div className="space-y-2">
         <h1 className="font-display text-4xl font-bold tracking-tight text-foreground">
@@ -119,6 +119,6 @@ export default function ContributionsPage() {
           </p>
         </div>
       </section>
-    </main>
+    </div>
   );
 }

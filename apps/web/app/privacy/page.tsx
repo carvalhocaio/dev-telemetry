@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <main className="mx-auto max-w-7xl px-6 py-12 flex flex-col gap-8">
+    <div className="mx-auto max-w-7xl px-6 py-12 flex flex-col gap-8">
       <div className="flex flex-col gap-2">
         <Link
           href="/"
@@ -100,6 +100,6 @@ export default function PrivacyPage() {
           </a>
         </p>
       </section>
-    </main>
+    </div>
   );
 }
